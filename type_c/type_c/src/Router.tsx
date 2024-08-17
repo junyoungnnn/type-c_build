@@ -8,7 +8,7 @@ function Router() {
   return (
     <BrowserRouter>
       <Switch>
-        <Route exact path="/type-c">
+        <Route exact path="/type-c_build">
           <Fishs />
         </Route>
         <Route path="/:fishName">

@@ -1,9 +1,11 @@
 https://junyoungnnn.github.io/type-c
+https://junyoungnnn.github.io/type-c_build
 
 npm install react-query recoil react-router-dom react-helmet-async react-apexcharts react-hook-form react-icons
 
 @types/react 파일이 모듈이 아니라는 오류
 npm install typescript @types/react --save-dev
+npm install typescript@4.9.5 @types/react@4.9.5 --save-dev
 
 # Getting Started with Create React App
 

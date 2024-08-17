@@ -164,7 +164,7 @@ function Fish() {
       <Header>
         <Nav>
           <HighlightedText>Type-C</HighlightedText>
-          <Link to={`/type-c`}>Home</Link>
+          <Link to={`/type-c_build`}>Home</Link>
           <Link to="/about">About</Link>
           <Link to="/contact">Contact</Link>
         </Nav>
