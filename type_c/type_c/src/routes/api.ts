@@ -1,4 +1,4 @@
-const Base_URL = `https://yaguhang.kro.kr:6443/api/v1/fishPrice/`;
+const Base_URL = `${process.env.REACT_APP_FISHS_BASE_URL}`;
 
 export function fetchFishList() {
   return fetch(`${Base_URL}fishList`).then((response) => response.json());

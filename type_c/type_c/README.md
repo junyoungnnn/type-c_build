@@ -1,7 +1,9 @@
 https://junyoungnnn.github.io/type-c
-https://sravel.kro.kr:7443/swagger-ui/index.html#/fish-controller/getFishPredictedPrice
-https://yaguhang.kro.kr:6443/api/v1/fishPrice/
-npm install --save moment
+
+npm install react-query recoil react-router-dom react-helmet-async react-apexcharts react-hook-form react-icons
+
+@types/react 파일이 모듈이 아니라는 오류
+npm install typescript @types/react --save-dev
 
 # Getting Started with Create React App
 
