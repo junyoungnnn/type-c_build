@@ -8,7 +8,7 @@ import {
   endDateAtom,
   isDarkAtom,
   oneMonthLastAtom,
-  startDateAtom,
+  oneWeekDateAtom,
 } from "../atom";
 import { useForm } from "react-hook-form";
 import { FaSun, FaMoon } from "react-icons/fa"; // sun과 moon 아이콘 가져오기
@@ -131,7 +131,7 @@ function Fishs() {
     useQuery<IFishList>("allFishs", fetchFishList);
 
   const endDate = useRecoilValue(endDateAtom);
-  const startDate = useRecoilValue(startDateAtom);
+  const startDate = useRecoilValue(oneWeekDateAtom);
   const oneMonthLast = useRecoilValue(oneMonthLastAtom);
 
   const {

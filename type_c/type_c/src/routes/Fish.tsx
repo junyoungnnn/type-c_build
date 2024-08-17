@@ -1,19 +1,19 @@
-import {
-  Switch,
-  Route,
-  useLocation,
-  useParams,
-  Link,
-  useRouteMatch,
-} from "react-router-dom";
+import React, { useState } from "react";
+import { useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { useQuery } from "react-query";
 import { fetchFishRealPrice, fetchFishPredictPrice } from "./api";
 import { Helmet } from "react-helmet-async";
 import ApexChart from "react-apexcharts";
 import { useRecoilValue } from "recoil";
-import { endDateAtom, isDarkAtom, startDateAtom } from "../atom";
-import Chart from "./Chart";
+import {
+  endDateAtom,
+  isDarkAtom,
+  oneWeekDateAtom,
+  oneMonthLastAtom,
+  halfYearLastAtom,
+} from "../atom";
 
 const Container = styled.div`
   padding: 0px 20px;
@@ -30,9 +30,6 @@ const Header = styled.header`
   padding: 0 20px;
   background-color: black;
   color: white;
-  position: relative;
-  left: 0;
-  top: 0;
 `;
 
 const Nav = styled.nav`
@@ -52,20 +49,6 @@ const HighlightedText = styled.span`
   margin-right: 20px;
 `;
 
-const Footer = styled.footer`
-  width: 100%;
-  height: 5vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: black;
-  color: white;
-  margin-top: 20px;
-  position: relative;
-  left: 0;
-  bottom: 0;
-`;
-
 const Title = styled.h1`
   font-size: 48px;
   color: ${(props) => props.theme.accentColor};
@@ -79,48 +62,14 @@ const Loader = styled.span`
   display: block;
 `;
 
-const Overview = styled.div`
-  display: flex;
-  justify-content: space-between;
-  background-color: rgba(0, 0, 204, 0.5);
+const Button = styled.button`
+  margin: 0 5px;
   padding: 10px 20px;
-  border-radius: 10px;
-  margin: 5%;
-`;
-
-const OverviewItem = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
-  span:first-child {
-    font-size: 10px;
-    font-weight: 400;
-    text-transform: uppercase;
-    margin-bottom: 5px;
-  }
-`;
-
-const Tabs = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  margin: 25px 0px;
-  gap: 10px;
-`;
-
-const Tab = styled.span<{ $isactive: boolean }>`
-  text-align: center;
-  text-transform: uppercase;
-  font-size: 12px;
-  font-weight: 400;
-  background-color: rgba(0, 153, 255, 0.5);
-  padding: 7px 0px;
-  border-radius: 10px;
-  color: ${(props) =>
-    props.$isactive ? props.theme.accentColor2 : props.theme.accentColor};
-  a {
-    display: block;
-  }
+  background-color: ${(props) => props.theme.accentColor};
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
 `;
 
 interface RouteParams {
@@ -149,10 +98,19 @@ interface IPredictData {
 
 function Fish() {
   const { fishName } = useParams<RouteParams>();
-  const priceMatch = useRouteMatch("/:fishName");
-  const chartMatch = useRouteMatch("/:fishName/chart");
+  const [selectedPeriod, setSelectedPeriod] = useState("7Days"); // 차트 기간 선택 상태
   const endDate = useRecoilValue(endDateAtom);
-  const startDate = useRecoilValue(startDateAtom);
+  const oneWeekDate = useRecoilValue(oneWeekDateAtom);
+  const oneMonthDate = useRecoilValue(oneMonthLastAtom);
+  const halfYearDate = useRecoilValue(halfYearLastAtom);
+
+  // 사용자가 선택한 기간에 따라 시작 날짜를 동적으로 설정
+  const startDate =
+    selectedPeriod === "180Days"
+      ? halfYearDate
+      : selectedPeriod === "30Days"
+      ? oneMonthDate
+      : oneWeekDate;
 
   const { isLoading: realPriceLoading, data: realPriceData } =
     useQuery<IRealPriceData>(["realprice", fishName, startDate, endDate], () =>
@@ -162,14 +120,30 @@ function Fish() {
   const { isLoading: predictPriceLoading, data: predictPriceData } =
     useQuery<IPredictPriceData>(
       ["predictprice", fishName, startDate, endDate],
-      () => fetchFishPredictPrice(fishName, startDate, endDate)
+      () => fetchFishPredictPrice(fishName, startDate, endDate),
+      {
+        enabled: selectedPeriod === "30Days" || selectedPeriod === "180Days", // 30일 또는 180일 차트일 때만 predictPriceData를 가져옵니다.
+      }
     );
+
   const isDark = useRecoilValue(isDarkAtom);
   const loading = realPriceLoading || predictPriceLoading;
 
-  if (chartMatch) {
-    return <Chart fishName={fishName} />;
-  }
+  // 차트 데이터 설정
+  const chartData =
+    (selectedPeriod === "30Days" || selectedPeriod === "180Days") &&
+    predictPriceData?.data?.length
+      ? predictPriceData.data.map((price) => Number(price.predictPrice))
+      : realPriceData?.data?.map((price) => Number(price.realPrice)) || [];
+
+  const chartCategories =
+    (selectedPeriod === "30Days" || selectedPeriod === "180Days") &&
+    predictPriceData?.data?.length
+      ? predictPriceData.data.map((date) => String(date.predictDate))
+      : realPriceData?.data?.map((date) => String(date.date)) || [];
+
+  console.log("Chart Data:", chartData);
+  console.log("Chart Categories:", chartCategories);
 
   return (
     <>
@@ -191,122 +165,106 @@ function Fish() {
           <Loader>Loading...</Loader>
         ) : (
           <>
-            <Tabs>
-              <Tab $isactive={priceMatch !== null}>
-                <span>7 Days</span>
-              </Tab>
-              <Tab $isactive={chartMatch !== null}>
-                <Link to={`/${fishName}/chart`}>30 Days</Link>
-              </Tab>
-            </Tabs>
-            <ApexChart
-              type="line"
-              series={[
-                {
-                  name: "RealPrice",
-                  data: realPriceData?.data?.map((price) =>
-                    Number(price.realPrice)
-                  ) as number[],
-                },
-                {
-                  name: "PredictPrice",
-                  data: predictPriceData?.data?.map((price) =>
-                    Number(price.predictPrice)
-                  ) as number[],
-                },
-              ]}
-              options={{
-                theme: {
-                  mode: isDark ? "dark" : "light",
-                },
-                chart: {
-                  height: 500,
-                  width: 700,
-                  zoom: {
-                    enabled: false,
+            <div>
+              <Button onClick={() => setSelectedPeriod("7Days")}>7 Days</Button>
+              <Button onClick={() => setSelectedPeriod("30Days")}>
+                30 Days
+              </Button>
+              <Button onClick={() => setSelectedPeriod("180Days")}>
+                180 Days
+              </Button>
+            </div>
+
+            {chartData.length === 0 ? (
+              <Loader>No data available for the selected period.</Loader>
+            ) : (
+              <ApexChart
+                type="line"
+                series={[
+                  {
+                    name:
+                      selectedPeriod === "30Days" ||
+                      selectedPeriod === "180Days"
+                        ? "PredictPrice"
+                        : "RealPrice",
+                    data: chartData,
                   },
-                  toolbar: {
+                ]}
+                options={{
+                  theme: {
+                    mode: isDark ? "dark" : "light",
+                  },
+                  chart: {
+                    height: 500,
+                    width: 700,
+                    zoom: {
+                      enabled: false,
+                    },
+                    toolbar: {
+                      show: false,
+                    },
+                    background: "transparent",
+                    animations: {
+                      enabled: false,
+                    },
+                  },
+                  title: {
+                    text:
+                      selectedPeriod === "180Days"
+                        ? "180 Days Chart"
+                        : selectedPeriod === "30Days"
+                        ? "30 Days Chart"
+                        : "7 Days Chart",
+                    align: "left",
+                    style: {
+                      fontSize: "14px",
+                      fontWeight: "bold",
+                      fontFamily: "Helvetica, Arial, sans-serif",
+                      color: "#263238",
+                    },
+                  },
+                  stroke: {
+                    width: [5],
+                    curve: "straight",
+                  },
+                  yaxis: {
                     show: false,
                   },
-                  background: "transparent",
-                  animations: {
-                    enabled: false,
+                  xaxis: {
+                    axisBorder: { show: false },
+                    axisTicks: { show: false },
+                    labels: {
+                      show: true,
+                      style: {
+                        colors: "#000000",
+                        fontFamily: "Helvetica, Arial, sans-serif",
+                        fontSize: "12px",
+                      },
+                    },
+                    categories: chartCategories,
                   },
-                },
-                title: {
-                  text: "Week Chart",
-                  align: "left",
-                  style: {
-                    fontSize: "14px",
-                    fontWeight: "bold",
-                    fontFamily: "Helvetica, Arial, sans-serif",
-                    color: "#263238",
-                  },
-                },
-                stroke: {
-                  width: [5, 7],
-                  curve: "straight",
-                  dashArray: [0, 8],
-                },
-                yaxis: {
-                  show: false,
-                },
-                xaxis: {
-                  axisBorder: { show: false },
-                  axisTicks: { show: false },
-                  labels: {
-                    show: true,
-                    style: {
-                      colors: "#000000",
-                      fontFamily: "Helvetica, Arial, sans-serif",
-                      fontSize: "12px",
+                  fill: {
+                    type: "gradient",
+                    gradient: {
+                      gradientToColors: ["#0be881"],
+                      stops: [0, 100],
                     },
                   },
-                  categories: predictPriceData?.data?.map((date) =>
-                    String(date.predictDate)
-                  ) as String[],
-                },
-                fill: {
-                  type: "gradient",
-                  gradient: { gradientToColors: ["#0be881"], stops: [0, 100] },
-                },
-                colors: ["#0fbcf9", "#e8308b"],
-                tooltip: {
-                  y: [
-                    {
+                  colors: ["#0fbcf9"],
+                  tooltip: {
+                    y: {
                       formatter: (value) => `${value?.toFixed(0)}원`,
                     },
-                    {
-                      formatter: (value) => `${value?.toFixed(0)}원`,
-                    },
-                  ],
-                },
-                grid: {
-                  borderColor: "#ffffff",
-                },
-              }}
-            />
-            {predictPriceData?.data &&
-              predictPriceData?.data.map((item, index) => (
-                <div key={index}>
-                  <Overview>
-                    <OverviewItem>
-                      <span>Date</span>
-                      <span>{item?.predictDate}</span>
-                    </OverviewItem>
-                    <OverviewItem>
-                      <span>Real Price</span>
-                      <span>{item?.predictPrice}</span>
-                    </OverviewItem>
-                  </Overview>
-                </div>
-              ))}
+                  },
+                  grid: {
+                    borderColor: "#ffffff",
+                  },
+                }}
+              />
+            )}
           </>
         )}
       </Container>
-      <Footer>
-        <p>&copy; 2024 수산물 가격 예측. All rights reserved.</p>
-      </Footer>
     </>
   );
 }
