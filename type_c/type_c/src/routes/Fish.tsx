@@ -72,6 +72,20 @@ const Button = styled.button`
   cursor: pointer;
 `;
 
+const Footer = styled.footer`
+  width: 100%;
+  height: 5vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: black;
+  color: white;
+  margin-top: 20px;
+  position: relative;
+  left: 0;
+  bottom: 0;
+`;
+
 interface RouteParams {
   fishName: string;
 }
@@ -141,9 +155,6 @@ function Fish() {
     predictPriceData?.data?.length
       ? predictPriceData.data.map((date) => String(date.predictDate))
       : realPriceData?.data?.map((date) => String(date.date)) || [];
-
-  console.log("Chart Data:", chartData);
-  console.log("Chart Categories:", chartCategories);
 
   return (
     <>
@@ -265,6 +276,9 @@ function Fish() {
           </>
         )}
       </Container>
+      <Footer>
+        <p>&copy; 2024 수산물 가격 예측. All rights reserved.</p>
+      </Footer>
     </>
   );
 }
