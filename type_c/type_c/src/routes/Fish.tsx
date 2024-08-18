@@ -143,12 +143,28 @@ function Fish() {
   const isDark = useRecoilValue(isDarkAtom);
   const loading = realPriceLoading || predictPriceLoading;
 
+  // Helper function to adjust prices
+  const adjustPrices = (prices: number[]): number[] => {
+    return prices.map((price, index) => {
+      if (price === 0) {
+        // Traverse backwards to find the last non-zero price
+        for (let i = index - 1; i >= 0; i--) {
+          if (prices[i] !== 0) {
+            return prices[i];
+          }
+        }
+      }
+      return price;
+    });
+  };
+
   // 차트 데이터 설정
-  const chartData =
+  const chartData = adjustPrices(
     (selectedPeriod === "30Days" || selectedPeriod === "180Days") &&
-    predictPriceData?.data?.length
+      predictPriceData?.data?.length
       ? predictPriceData.data.map((price) => Number(price.predictPrice))
-      : realPriceData?.data?.map((price) => Number(price.realPrice)) || [];
+      : realPriceData?.data?.map((price) => Number(price.realPrice)) || []
+  );
 
   const chartCategories =
     (selectedPeriod === "30Days" || selectedPeriod === "180Days") &&
