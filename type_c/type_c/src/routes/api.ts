@@ -6,11 +6,12 @@ export function fetchFishList() {
 
 export function fetchFishRealPrice(
   fishName: string,
+  fishCode: string,
   startDate: string,
   endDate: string
 ) {
   return fetch(
-    `${Base_URL}real?fishName=${fishName}&startDate=${startDate}&endDate=${endDate}`
+    `${Base_URL}real?fishName=${fishName}&fishCode=${fishCode}&startDate=${startDate}&endDate=${endDate}`
   ).then((response) => response.json());
 }
 

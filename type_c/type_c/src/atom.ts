@@ -7,8 +7,8 @@ export const isDarkAtom = atom({
 });
 
 export const endDateAtom = atom({
-  key: "endDate", // °íÀ¯ÇÑ Å°
-  default: moment().format("YYYY-MM-DD"), // ÃÊ±â °ª
+  key: "endDate", // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å°
+  default: moment().format("YYYY-MM-DD"), // ï¿½Ê±ï¿½ ï¿½ï¿½
 });
 
 export const oneWeekDateAtom = atom({

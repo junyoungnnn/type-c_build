@@ -7,17 +7,11 @@ import { fetchFishRealPrice, fetchFishPredictPrice } from "./api";
 import { Helmet } from "react-helmet-async";
 import ApexChart from "react-apexcharts";
 import { useRecoilValue } from "recoil";
-import {
-  endDateAtom,
-  isDarkAtom,
-  oneWeekDateAtom,
-  oneMonthLastAtom,
-  halfYearLastAtom,
-} from "../atom";
+import { endDateAtom, isDarkAtom, halfYearLastAtom } from "../atom";
 
 const Container = styled.div`
-  padding: 0px 20px;
-  max-width: 680px;
+  padding: 20px;
+  max-width: 800px;
   margin: 0 auto;
 `;
 
@@ -34,7 +28,7 @@ const Header = styled.header`
 
 const Nav = styled.nav`
   display: flex;
-  gap: 15px;
+  gap: 20px;
   a {
     text-decoration: none;
     color: white;
@@ -50,11 +44,10 @@ const HighlightedText = styled.span`
 `;
 
 const Title = styled.h1`
-  font-size: 48px;
+  font-size: 36px;
   color: ${(props) => props.theme.accentColor};
   text-align: center;
-  margin-top: 20px;
-  margin-bottom: 20px;
+  margin: 20px 0;
 `;
 
 const Loader = styled.span`
@@ -62,14 +55,27 @@ const Loader = styled.span`
   display: block;
 `;
 
-const Button = styled.button`
-  margin: 0 5px;
+const ButtonGroup = styled.div`
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+  gap: 15px;
+`;
+
+const Button = styled.button<{ active: boolean }>`
   padding: 10px 20px;
-  background-color: ${(props) => props.theme.accentColor};
+  background-color: ${(props) =>
+    props.active ? props.theme.accentColor : "#444"};
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+
+  &:hover {
+    background-color: ${(props) => props.theme.accentColor};
+  }
 `;
 
 const Footer = styled.footer`
@@ -96,6 +102,7 @@ interface IRealPriceData {
 
 interface IRealData {
   fishName: string;
+  fishCode: string;
   date: string;
   realPrice: number;
 }
@@ -112,65 +119,63 @@ interface IPredictData {
 
 function Fish() {
   const { fishName } = useParams<RouteParams>();
-  const [selectedPeriod, setSelectedPeriod] = useState("7Days"); // 차트 기간 선택 상태
+  const [selectedPeriod, setSelectedPeriod] = useState("7Days");
+  const [fishCode, setFishCode] = useState("0");
   const endDate = useRecoilValue(endDateAtom);
-  const oneWeekDate = useRecoilValue(oneWeekDateAtom);
-  const oneMonthDate = useRecoilValue(oneMonthLastAtom);
   const halfYearDate = useRecoilValue(halfYearLastAtom);
 
-  // 사용자가 선택한 기간에 따라 시작 날짜를 동적으로 설정
-  const startDate =
-    selectedPeriod === "180Days"
-      ? halfYearDate
-      : selectedPeriod === "30Days"
-      ? oneMonthDate
-      : oneWeekDate;
-
-  const { isLoading: realPriceLoading, data: realPriceData } =
-    useQuery<IRealPriceData>(["realprice", fishName, startDate, endDate], () =>
-      fetchFishRealPrice(fishName, startDate, endDate)
+  const { isLoading: realPriceLoading, data: realPriceDataResponse } =
+    useQuery<IRealPriceData>(
+      ["realprice", fishName, fishCode, halfYearDate, endDate],
+      () => fetchFishRealPrice(fishName, fishCode, halfYearDate, endDate)
     );
 
-  const { isLoading: predictPriceLoading, data: predictPriceData } =
+  const { isLoading: predictPriceLoading, data: predictPriceDataResponse } =
     useQuery<IPredictPriceData>(
-      ["predictprice", fishName, startDate, endDate],
-      () => fetchFishPredictPrice(fishName, startDate, endDate),
+      ["predictprice", fishName, fishCode, halfYearDate, endDate],
+      () => fetchFishPredictPrice(fishName, halfYearDate, endDate),
       {
-        enabled: selectedPeriod === "30Days" || selectedPeriod === "180Days", // 30일 또는 180일 차트일 때만 predictPriceData를 가져옵니다.
+        enabled: selectedPeriod === "30Days" || selectedPeriod === "180Days",
       }
     );
 
   const isDark = useRecoilValue(isDarkAtom);
   const loading = realPriceLoading || predictPriceLoading;
 
-  // Helper function to adjust prices
   const adjustPrices = (prices: number[]): number[] => {
-    return prices.map((price, index) => {
+    let lastValidPrice = prices.find((price) => price !== 0) || 0;
+    return prices.map((price) => {
       if (price === 0) {
-        // Traverse backwards to find the last non-zero price
-        for (let i = index - 1; i >= 0; i--) {
-          if (prices[i] !== 0) {
-            return prices[i];
-          }
-        }
+        return lastValidPrice;
       }
+      lastValidPrice = price;
       return price;
     });
   };
 
-  // 차트 데이터 설정
-  const chartData = adjustPrices(
-    (selectedPeriod === "30Days" || selectedPeriod === "180Days") &&
-      predictPriceData?.data?.length
-      ? predictPriceData.data.map((price) => Number(price.predictPrice))
-      : realPriceData?.data?.map((price) => Number(price.realPrice)) || []
-  );
+  const processPriceData = (data: number[], period: string) => {
+    const periodLength = period === "7Days" ? 7 : 30;
+    const slicedData = data.slice(-periodLength);
+    return adjustPrices(slicedData);
+  };
 
-  const chartCategories =
-    (selectedPeriod === "30Days" || selectedPeriod === "180Days") &&
-    predictPriceData?.data?.length
-      ? predictPriceData.data.map((date) => String(date.predictDate))
-      : realPriceData?.data?.map((date) => String(date.date)) || [];
+  let realPriceData =
+    realPriceDataResponse?.data.map((data) => data.realPrice) || [];
+  let predictPriceData =
+    predictPriceDataResponse?.data.map((data) => data.predictPrice) || [];
+
+  let chartCategories =
+    realPriceDataResponse?.data.map((data) => data.date) ||
+    predictPriceDataResponse?.data.map((data) => data.predictDate) ||
+    [];
+
+  if (selectedPeriod === "7Days" || selectedPeriod === "30Days") {
+    realPriceData = processPriceData(realPriceData, selectedPeriod);
+    predictPriceData = processPriceData(predictPriceData, selectedPeriod);
+    chartCategories = chartCategories.slice(-realPriceData.length);
+  } else {
+    realPriceData = adjustPrices(realPriceData);
+  }
 
   return (
     <>
@@ -192,29 +197,66 @@ function Fish() {
           <Loader>Loading...</Loader>
         ) : (
           <>
-            <div>
-              <Button onClick={() => setSelectedPeriod("7Days")}>7 Days</Button>
-              <Button onClick={() => setSelectedPeriod("30Days")}>
+            <ButtonGroup>
+              <Button
+                onClick={() => setFishCode("0")}
+                active={fishCode === "0"}
+              >
+                FishCode 0
+              </Button>
+              <Button
+                onClick={() => setFishCode("1")}
+                active={fishCode === "1"}
+              >
+                FishCode 1
+              </Button>
+              <Button
+                onClick={() => setFishCode("2")}
+                active={fishCode === "2"}
+              >
+                FishCode 2
+              </Button>
+              <Button
+                onClick={() => setFishCode("3")}
+                active={fishCode === "3"}
+              >
+                FishCode 3
+              </Button>
+            </ButtonGroup>
+            <ButtonGroup>
+              <Button
+                onClick={() => setSelectedPeriod("7Days")}
+                active={selectedPeriod === "7Days"}
+              >
+                7 Days
+              </Button>
+              <Button
+                onClick={() => setSelectedPeriod("30Days")}
+                active={selectedPeriod === "30Days"}
+              >
                 30 Days
               </Button>
-              <Button onClick={() => setSelectedPeriod("180Days")}>
+              <Button
+                onClick={() => setSelectedPeriod("180Days")}
+                active={selectedPeriod === "180Days"}
+              >
                 180 Days
               </Button>
-            </div>
+            </ButtonGroup>
 
-            {chartData.length === 0 ? (
+            {realPriceData.length === 0 && predictPriceData.length === 0 ? (
               <Loader>No data available for the selected period.</Loader>
             ) : (
               <ApexChart
                 type="line"
                 series={[
                   {
-                    name:
-                      selectedPeriod === "30Days" ||
-                      selectedPeriod === "180Days"
-                        ? "PredictPrice"
-                        : "RealPrice",
-                    data: chartData,
+                    name: "RealPrice",
+                    data: realPriceData,
+                  },
+                  {
+                    name: "PredictPrice",
+                    data: predictPriceData,
                   },
                 ]}
                 options={{
@@ -255,7 +297,7 @@ function Fish() {
                     curve: "straight",
                   },
                   yaxis: {
-                    show: false,
+                    show: true,
                   },
                   xaxis: {
                     axisBorder: { show: false },
@@ -277,7 +319,7 @@ function Fish() {
                       stops: [0, 100],
                     },
                   },
-                  colors: ["#0fbcf9"],
+                  colors: ["#0fbcf9", "#e74c3c"],
                   tooltip: {
                     y: {
                       formatter: (value) => `${value?.toFixed(0)}원`,
