@@ -202,25 +202,25 @@ function Fish() {
                 onClick={() => setFishCode("0")}
                 active={fishCode === "0"}
               >
-                FishCode 0
+                활어
               </Button>
               <Button
                 onClick={() => setFishCode("1")}
                 active={fishCode === "1"}
               >
-                FishCode 1
+                선어
               </Button>
               <Button
                 onClick={() => setFishCode("2")}
                 active={fishCode === "2"}
               >
-                FishCode 2
+                냉동
               </Button>
               <Button
                 onClick={() => setFishCode("3")}
                 active={fishCode === "3"}
               >
-                FishCode 3
+                가공
               </Button>
             </ButtonGroup>
             <ButtonGroup>
