@@ -27,51 +27,32 @@ export function fetchFishPredictPrice(
   ).then((response) => response.json());
 }
 
-const mof_URL = `https://www.mof.go.kr/doc/ko/selectDocList.do?menuSeq=971&bbsSeq=10&listUpdtDt=2024-08-20`;
+const mof_URL =
+  "https%3A%2F%2Fwww.mof.go.kr%2Fdoc%2Fko%2FselectDocList.do%3FmenuSeq%3D971%26bbsSeq%3D10%26listUpdtDt%3D2024-08-20";
+
+console.log(
+  `ìš”ì²­URL: ${News_fetch_URL}proxy?key=${News_Key}&reqLink=${mof_URL}`
+);
 
 export function fetchNews() {
   return fetch(`${News_fetch_URL}proxy?key=${News_Key}&reqLink=${mof_URL}`)
-    .then((response) => response.text()) // HTMLÀ» ÅØ½ºÆ®·Î ¹Þ½À´Ï´Ù.
-    .then((htmlString) => {
-      console.log("Fetched HTML string:", htmlString); // HTML ³»¿ëÀ» È®ÀÎÇÏ±â À§ÇÑ ·Î±×
-
-      // DOMParser¸¦ »ç¿ëÇÏ¿© HTMLÀ» ÆÄ½ÌÇÕ´Ï´Ù.
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(htmlString, "text/html");
-
-      // 'link-t' Å¬·¡½º¸¦ °¡Áø ¸ðµç <a> ÅÂ±×¸¦ ¼±ÅÃÇÕ´Ï´Ù.
-      const newsItems = Array.from(doc.querySelectorAll("a.link-t"));
-
-      console.log("Parsed news items:", newsItems); // ÆÄ½ÌµÈ ´º½º Ç×¸ñ È®ÀÎ
-
-      // °¢ Ç×¸ñ¿¡¼­ ÇÊ¿äÇÑ Á¤º¸¸¦ ÃßÃâÇÕ´Ï´Ù.
-      return newsItems.map((item) => {
-        const onclickAttr = item.getAttribute("onclick");
-        let id = null;
-
-        // 'onclick' ¼Ó¼ºÀÌ ÀÖ´ÂÁö È®ÀÎÇÏ°í, ¼ýÀÚ¸¦ ÃßÃâÇÕ´Ï´Ù.
-        if (onclickAttr) {
-          const match = onclickAttr.match(/\d+/);
-          if (match) {
-            id = match[0];
-          }
-        }
-
-        return {
-          title: item.getAttribute("title") || "",
-          id: id,
-          link: id
-            ? `https://www.mof.go.kr/doc/ko/selectDoc.do?docSeq=${id}&menuSeq=971&bbsSeq=10`
-            : null,
-        };
-      });
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      return response.arrayBuffer(); // ArrayBufferë¡œ ë°ì´í„°ë¥¼ ë°›ìŠµë‹ˆë‹¤.
     })
-    .then((newsList) => {
-      console.log("Parsed news list:", newsList); // ÃÖÁ¾ ´º½º ¸ñ·Ï È®ÀÎ
-      return newsList;
+    .then((buffer) => {
+      // TextDecoderë¥¼ ì‚¬ìš©í•˜ì—¬ UTF-8ë¡œ ë””ì½”ë”©
+      const decoder = new TextDecoder("utf-8"); // "euc-kr" ë˜ëŠ” ë‹¤ë¥¸ ì¸ì½”ë”©ìœ¼ë¡œë„ ì‹œë„ ê°€ëŠ¥
+      const textData = decoder.decode(buffer);
+
+      console.log("Fetched text data:", textData);
+
+      return textData;
     })
     .catch((error) => {
       console.error("Error fetching news:", error);
-      return [];
+      return null;
     });
 }

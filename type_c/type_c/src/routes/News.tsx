@@ -43,11 +43,15 @@ interface INewsItem {
 }
 
 function News() {
-  const { isLoading: newsListLoading, data: newsListData } = useQuery<
-    INewsItem[]
-  >("allNews", fetchNews);
+  const {
+    isLoading: newsListLoading,
+    data: newsTextData,
+    error,
+  } = useQuery<string | null>("allNews", fetchNews);
 
-  console.log("Fetched news data in component:", newsListData); // 뉴스 데이터를 확인
+  if (error) {
+    return <Loader>Error fetching news.</Loader>;
+  }
 
   return (
     <>
@@ -59,20 +63,10 @@ function News() {
         <Loader>Loading...</Loader>
       ) : (
         <NewsList>
-          {newsListData && newsListData.length > 0 ? (
-            newsListData.map((item, index) => (
-              <NewsLink key={index}>
-                {item.link ? (
-                  <a href={item.link} target="_blank" rel="noopener noreferrer">
-                    {item.title}
-                  </a>
-                ) : (
-                  <span>{item.title} (Link unavailable)</span>
-                )}
-              </NewsLink>
-            ))
+          {newsTextData ? (
+            <pre>{newsTextData}</pre>
           ) : (
-            <Loader>No news available.</Loader>
+            <Loader>No news data available.</Loader>
           )}
         </NewsList>
       )}
