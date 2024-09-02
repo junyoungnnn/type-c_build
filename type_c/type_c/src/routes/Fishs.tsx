@@ -154,6 +154,7 @@ function Fishs() {
         <Nav>
           <HighlightedText>Type-C</HighlightedText>
           <Link to={`/type-c_build`}>Home</Link>
+          <Link to={"/news"}>News</Link>
           <Link to="/about">About</Link>
           <Link to="/contact">Contact</Link>
         </Nav>

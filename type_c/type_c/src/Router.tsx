@@ -11,6 +11,9 @@ function Router() {
         <Route exact path="/type-c_build">
           <Fishs />
         </Route>
+        <Route path="/news">
+          <News />
+        </Route>
         <Route path="/:fishName">
           <Fish />
         </Route>
