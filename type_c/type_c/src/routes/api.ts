@@ -43,16 +43,39 @@ export function fetchNews() {
       return response.arrayBuffer(); // ArrayBuffer로 데이터를 받습니다.
     })
     .then((buffer) => {
-      // TextDecoder를 사용하여 UTF-8로 디코딩
-      const decoder = new TextDecoder("utf-8"); // "euc-kr" 또는 다른 인코딩으로도 시도 가능
+      const decoder = new TextDecoder("utf-8"); // UTF-8로 디코딩
       const textData = decoder.decode(buffer);
 
       console.log("Fetched text data:", textData);
 
-      return textData;
+      // HTML을 파싱하고 뉴스 아이템 추출
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(textData, "text/html");
+      const linkElements = doc.querySelectorAll("a.link-t");
+
+      const newsItems = Array.from(linkElements).map((element) => {
+        const title = element.textContent?.trim() || "";
+        const onclickAttr = element.getAttribute("onclick");
+
+        let id = null;
+        if (onclickAttr) {
+          const match = onclickAttr.match(/\d+/);
+          if (match) {
+            id = match[0];
+          }
+        }
+
+        const link = id
+          ? `https://www.mof.go.kr/doc/ko/selectDoc.do?docSeq=${id}&menuSeq=971&bbsSeq=10`
+          : null;
+
+        return { title, link };
+      });
+
+      return newsItems;
     })
     .catch((error) => {
       console.error("Error fetching news:", error);
-      return null;
+      return [];
     });
 }

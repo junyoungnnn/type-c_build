@@ -13,27 +13,26 @@ const Title = styled.h1`
   color: ${(props) => props.theme.accentColor};
 `;
 
-const NewsList = styled.ul`
-  list-style: none;
-  padding: 0;
+const NewsTable = styled.table`
+  width: 100%;
+  border-collapse: collapse;
 `;
 
-const NewsLink = styled.li`
-  margin: 10px 0;
-  font-size: 16px;
-  a {
-    display: block;
-    padding: 10px;
-    background-color: ${(props) => props.theme.bgColor};
-    color: ${(props) => props.theme.textColor};
-    text-decoration: none;
-    border-radius: 8px;
-    transition: background-color 0.3s ease;
+const TableHeader = styled.th`
+  background-color: ${(props) => props.theme.accentColor};
+  color: white;
+  padding: 10px;
+  text-align: left;
+`;
 
-    &:hover {
-      background-color: ${(props) => props.theme.accentColor};
-      color: white;
-    }
+const TableData = styled.td`
+  padding: 10px;
+  border-bottom: 1px solid ${(props) => props.theme.borderColor};
+`;
+
+const TableRow = styled.tr`
+  &:nth-child(even) {
+    background-color: ${(props) => props.theme.bgColor};
   }
 `;
 
@@ -45,9 +44,9 @@ interface INewsItem {
 function News() {
   const {
     isLoading: newsListLoading,
-    data: newsTextData,
+    data: newsListData,
     error,
-  } = useQuery<string | null>("allNews", fetchNews);
+  } = useQuery<INewsItem[]>("allNews", fetchNews);
 
   if (error) {
     return <Loader>Error fetching news.</Loader>;
@@ -62,13 +61,40 @@ function News() {
       {newsListLoading ? (
         <Loader>Loading...</Loader>
       ) : (
-        <NewsList>
-          {newsTextData ? (
-            <pre>{newsTextData}</pre>
-          ) : (
-            <Loader>No news data available.</Loader>
-          )}
-        </NewsList>
+        <NewsTable>
+          <thead>
+            <tr>
+              <TableHeader>번호</TableHeader>
+              <TableHeader>제목</TableHeader>
+            </tr>
+          </thead>
+          <tbody>
+            {newsListData && newsListData.length > 0 ? (
+              newsListData.map((item, index) => (
+                <TableRow key={index}>
+                  <TableData>{index + 1}</TableData>
+                  <TableData>
+                    {item.link ? (
+                      <a
+                        href={item.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {item.title}
+                      </a>
+                    ) : (
+                      <span>{item.title} (Link unavailable)</span>
+                    )}
+                  </TableData>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableData colSpan={2}>No news data available.</TableData>
+              </TableRow>
+            )}
+          </tbody>
+        </NewsTable>
       )}
     </>
   );
