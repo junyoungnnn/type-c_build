@@ -27,15 +27,23 @@ export function fetchFishPredictPrice(
   ).then((response) => response.json());
 }
 
-const mof_URL =
-  "https%3A%2F%2Fwww.mof.go.kr%2Fdoc%2Fko%2FselectDocList.do%3FmenuSeq%3D971%26bbsSeq%3D10%26listUpdtDt%3D2024-08-20";
+const baseMofUrl =
+  "https://www.mof.go.kr/doc/ko/selectDocList.do?menuSeq=971&bbsSeq=10&listUpdtDt=2024-08-20";
 
 console.log(
-  `요청URL: ${News_fetch_URL}proxy?key=${News_Key}&reqLink=${mof_URL}`
+  `요청URL: ${News_fetch_URL}proxy?key=${News_Key}&reqLink=${encodeURIComponent(
+    baseMofUrl
+  )}`
 );
 
-export function fetchNews() {
-  return fetch(`${News_fetch_URL}proxy?key=${News_Key}&reqLink=${mof_URL}`)
+export function fetchNews(pageNo: number = 1) {
+  const mof_URL = `${baseMofUrl}&paginationInfo.currentPageNo=${pageNo}`;
+
+  return fetch(
+    `${News_fetch_URL}proxy?key=${News_Key}&reqLink=${encodeURIComponent(
+      mof_URL
+    )}`
+  )
     .then((response) => {
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
