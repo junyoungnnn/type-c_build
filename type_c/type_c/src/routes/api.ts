@@ -27,28 +27,23 @@ export function fetchFishPredictPrice(
   ).then((response) => response.json());
 }
 
-const mof_URL =
-  "https%3A%2F%2Fwww.mof.go.kr%2Fdoc%2Fko%2FselectDocList.do%3FmenuSeq%3D971%26bbsSeq%3D10%26listUpdtDt%3D2024-08-20";
-
-console.log(
-  `요청URL: ${News_fetch_URL}proxy?key=${News_Key}&reqLink=${mof_URL}`
-);
+const baseMOF_URL = "https%3A%2F%2Fwww.mof.go.kr%2Fdoc%2Fko%2FselectDocList.do";
 
 export function fetchNews(page: number) {
-  const pageURL = `${News_fetch_URL}proxy?key=${News_Key}&reqLink=${mof_URL}&paginationInfo.currentPageNo=${page}`;
+  // 페이지 번호를 URL에 반영
+  const mof_URL = `${baseMOF_URL}%3FpaginationInfo.currentPageNo%3D${page}%26listUpdtDt%3D2024-08-30%2B%2B10%253A00%26menuSeq%3D971%26bbsSeq%3D10`;
+  const pageURL = `${News_fetch_URL}proxy?key=${News_Key}&reqLink=${mof_URL}`;
 
   return fetch(pageURL)
     .then((response) => {
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-      return response.arrayBuffer(); // ArrayBuffer로 데이터를 받습니다.
+      return response.arrayBuffer();
     })
     .then((buffer) => {
-      const decoder = new TextDecoder("utf-8"); // UTF-8로 디코딩
+      const decoder = new TextDecoder("utf-8");
       const textData = decoder.decode(buffer);
-
-      console.log("Fetched text data:", textData);
 
       // HTML을 파싱하고 뉴스 아이템 추출
       const parser = new DOMParser();
