@@ -55,7 +55,9 @@ const Pagination = styled.div`
 `;
 
 interface INewsItem {
+  num: string;
   title: string;
+  date: string;
   link: string | null;
 }
 
@@ -105,13 +107,16 @@ function News() {
           <NewsList>
             <thead>
               <tr>
+                <th>Number</th>
                 <th>Title</th>
+                <th>Date</th>
               </tr>
             </thead>
             <tbody>
               {newsItems && newsItems.length > 0 ? (
                 newsItems.map((item, index) => (
                   <tr key={index}>
+                    <td>{item.num}</td>
                     <td>
                       {item.link ? (
                         <a
@@ -125,11 +130,12 @@ function News() {
                         item.title
                       )}
                     </td>
+                    <td>{item.date}</td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td>No news available.</td>
+                  <td colSpan={3}>No news available.</td>
                 </tr>
               )}
             </tbody>

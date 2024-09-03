@@ -27,23 +27,17 @@ export function fetchFishPredictPrice(
   ).then((response) => response.json());
 }
 
-const baseMofUrl =
-  "https://www.mof.go.kr/doc/ko/selectDocList.do?menuSeq=971&bbsSeq=10&listUpdtDt=2024-08-20";
+const mof_URL =
+  "https%3A%2F%2Fwww.mof.go.kr%2Fdoc%2Fko%2FselectDocList.do%3FmenuSeq%3D971%26bbsSeq%3D10%26listUpdtDt%3D2024-08-20";
 
 console.log(
-  `요청URL: ${News_fetch_URL}proxy?key=${News_Key}&reqLink=${encodeURIComponent(
-    baseMofUrl
-  )}`
+  `요청URL: ${News_fetch_URL}proxy?key=${News_Key}&reqLink=${mof_URL}`
 );
 
-export function fetchNews(pageNo: number = 1) {
-  const mof_URL = `${baseMofUrl}&paginationInfo.currentPageNo=${pageNo}`;
+export function fetchNews(page: number) {
+  const pageURL = `${News_fetch_URL}proxy?key=${News_Key}&reqLink=${mof_URL}&paginationInfo.currentPageNo=${page}`;
 
-  return fetch(
-    `${News_fetch_URL}proxy?key=${News_Key}&reqLink=${encodeURIComponent(
-      mof_URL
-    )}`
-  )
+  return fetch(pageURL)
     .then((response) => {
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
@@ -59,11 +53,18 @@ export function fetchNews(pageNo: number = 1) {
       // HTML을 파싱하고 뉴스 아이템 추출
       const parser = new DOMParser();
       const doc = parser.parseFromString(textData, "text/html");
-      const linkElements = doc.querySelectorAll("a.link-t");
+      const rows = doc.querySelectorAll("tbody tr");
 
-      const newsItems = Array.from(linkElements).map((element) => {
-        const title = element.textContent?.trim() || "";
-        const onclickAttr = element.getAttribute("onclick");
+      const newsItems = Array.from(rows).map((row) => {
+        const numElement = row.querySelector(".num");
+        const titleElement = row.querySelector(".link-t");
+        const dateElement = row.querySelector(".t-date");
+
+        const num = numElement?.textContent?.trim() || "";
+        const title = titleElement?.textContent?.trim() || "";
+        const date = dateElement?.textContent?.trim() || "";
+
+        const onclickAttr = titleElement?.getAttribute("onclick");
 
         let id = null;
         if (onclickAttr) {
@@ -77,7 +78,7 @@ export function fetchNews(pageNo: number = 1) {
           ? `https://www.mof.go.kr/doc/ko/selectDoc.do?docSeq=${id}&menuSeq=971&bbsSeq=10`
           : null;
 
-        return { title, link };
+        return { num, title, date, link };
       });
 
       return newsItems;
