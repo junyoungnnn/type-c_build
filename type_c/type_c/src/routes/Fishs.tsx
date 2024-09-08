@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { Link } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { fetchFishList } from "./api";
 import { useQuery } from "react-query";
@@ -52,8 +52,8 @@ const HighlightedText = styled.span`
 `;
 
 const FishImg = styled.img`
-  width: 20%;
-  height: 20%;
+  width: 75px;
+  height: 75px;
 `;
 
 const FishsList = styled.ul``;
@@ -65,13 +65,13 @@ const Fish = styled.li`
   margin-bottom: 20px;
   border: 1px solid black;
   display: flex;
-  align-items: center; /* 수직 중앙 정렬 */
+  align-items: center;
   a {
     display: flex;
     align-items: center;
     padding: 20px;
     transition: color 0.2s ease-in;
-    text-decoration: none; /* 기본 링크 스타일 제거 */
+    text-decoration: none;
     width: 100%;
     height: 100%;
   }
@@ -109,6 +109,47 @@ const Footer = styled.footer`
   bottom: 0;
 `;
 
+const SelectContainer = styled.div`
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px; /* select와 button 사이의 간격 */
+  margin-bottom: 20px;
+`;
+
+const Select = styled.select`
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 5px;
+  border: 1px solid ${(props) => props.theme.borderColor};
+  background-color: ${(props) => props.theme.bgColor};
+  color: ${(props) => props.theme.textColor};
+  width: 100%;
+  max-width: 300px;
+  transition: border-color 0.3s ease;
+
+  &:focus {
+    outline: none;
+    border-color: ${(props) => props.theme.accentColor};
+  }
+`;
+
+const Button = styled.button`
+  padding: 10px 20px;
+  background-color: ${(props) => props.theme.bgColor};
+  color: ${(props) => props.theme.textColor};
+  border: 1px solid ${(props) => props.theme.borderColor};
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+
+  &:hover {
+    background-color: ${(props) => props.theme.accentColor};
+    color: white;
+  }
+`;
+
 interface IFishList {
   data: IData[];
 }
@@ -116,10 +157,6 @@ interface IFishList {
 interface IData {
   fishName: string;
   fishId: number;
-}
-
-interface IForm {
-  searchFishName: string;
 }
 
 function Fishs() {
@@ -130,19 +167,18 @@ function Fishs() {
   const { isLoading: fishListLoading, data: fishListData } =
     useQuery<IFishList>("allFishs", fetchFishList);
 
-  const endDate = useRecoilValue(endDateAtom);
-  const startDate = useRecoilValue(oneWeekDateAtom);
-  const oneMonthLast = useRecoilValue(oneMonthLastAtom);
+  const [selectedFish, setSelectedFish] = useState<string>("");
 
-  const {
-    register,
-    watch,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<IForm>();
+  const history = useHistory();
 
-  const onValid = (data: any) => {
-    console.log(data);
+  const handleFishChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedFish(event.target.value);
+  };
+
+  const handleNavigate = () => {
+    if (selectedFish) {
+      history.push(`/${selectedFish}`);
+    }
   };
 
   return (
@@ -158,7 +194,6 @@ function Fishs() {
           <Link to="/about">About</Link>
           <Link to="/contact">Contact</Link>
         </Nav>
-        {/* 아이콘이 포함된 버튼 */}
         <button onClick={toggleDarkAtom}>
           {isDarkMode ? <FaSun size={20} /> : <FaMoon size={20} />}
         </button>
@@ -168,26 +203,40 @@ function Fishs() {
         {fishListLoading ? (
           <Loader>"Loading..."</Loader>
         ) : (
-          <FishsList>
-            {fishListData?.data.map((item, index) => (
-              <Fish key={index}>
-                <Link
-                  to={{
-                    pathname: `/${item.fishName}`,
-                    state: {
-                      fishName: item.fishName,
-                    },
-                  }}
-                >
-                  <FishImg
-                    src={`${process.env.PUBLIC_URL}/${item.fishName}.png`}
-                    alt={`${item.fishName}이미지`}
-                  />
-                  {item.fishName} &rarr;
-                </Link>
-              </Fish>
-            ))}
-          </FishsList>
+          <>
+            {/* Select Dropdown */}
+            <SelectContainer>
+              <Select onChange={handleFishChange} value={selectedFish}>
+                <option value="">수산물을 선택하세요</option>
+                {fishListData?.data.map((item) => (
+                  <option key={item.fishId} value={item.fishName}>
+                    {item.fishName}
+                  </option>
+                ))}
+              </Select>
+              <Button onClick={handleNavigate}>Go</Button>
+            </SelectContainer>
+            <FishsList>
+              {fishListData?.data.map((item, index) => (
+                <Fish key={index}>
+                  <Link
+                    to={{
+                      pathname: `/${item.fishName}`,
+                      state: {
+                        fishName: item.fishName,
+                      },
+                    }}
+                  >
+                    <FishImg
+                      src={`${process.env.PUBLIC_URL}/${item.fishName}.png`}
+                      alt={`${item.fishName} 이미지`}
+                    />
+                    {item.fishName} &rarr;
+                  </Link>
+                </Fish>
+              ))}
+            </FishsList>
+          </>
         )}
       </Container>
       <Footer>
