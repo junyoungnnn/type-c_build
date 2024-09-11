@@ -10,6 +10,11 @@
   </head>
   <body>
     <div id="root"></div>
-    <script src="/static/js/bundle.js"></script>
+    <script type="text/javascript">
+      // GitHub Pages에서 SPA 새로고침을 위한 리다이렉트 처리
+      if (window.location.pathname !== "/") {
+        window.location.href = "/#" + window.location.pathname;
+      }
+    </script>
   </body>
 </html>
