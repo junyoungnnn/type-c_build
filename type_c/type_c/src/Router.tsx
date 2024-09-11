@@ -1,14 +1,13 @@
-import { BrowserRouter, Switch, Route } from "react-router-dom";
+import { HashRouter, Switch, Route } from "react-router-dom";
 import News from "./routes/News";
 import Fish from "./routes/Fish";
 import Fishs from "./routes/Fishs";
-/*<Route path={process.env.PUBLIC_URL + "/"}></Route>*/
 
 function Router() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Switch>
-        <Route exact path="/type-c_build">
+        <Route exact path="/">
           <Fishs />
         </Route>
         <Route path="/news">
@@ -18,7 +17,8 @@ function Router() {
           <Fish />
         </Route>
       </Switch>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
+
 export default Router;
