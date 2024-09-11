@@ -19,11 +19,13 @@ export function fetchFishRealPrice(
 
 export function fetchFishPredictPrice(
   fishName: string,
+  category: string,
   startDate: string,
-  endDate: string
+  endDate: string,
+  modelName: string
 ) {
   return fetch(
-    `${Base_URL}predict?fishName=${fishName}&startDate=${startDate}&endDate=${endDate}`
+    `${Base_URL}predict?fishName=${fishName}&categoty=${category}&startDate=${startDate}&endDate=${endDate}&modelName=${modelName}`
   ).then((response) => response.json());
 }
 

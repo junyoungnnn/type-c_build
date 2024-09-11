@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { useQuery } from "react-query";
@@ -121,6 +121,7 @@ function Fish() {
   const { fishName } = useParams<RouteParams>();
   const [selectedPeriod, setSelectedPeriod] = useState("7Days");
   const [fishCode, setFishCode] = useState("0");
+  const [modelName, setModelName] = useState("lstm");
   const endDate = useRecoilValue(endDateAtom);
   const halfYearDate = useRecoilValue(halfYearLastAtom);
 
@@ -132,8 +133,15 @@ function Fish() {
 
   const { isLoading: predictPriceLoading, data: predictPriceDataResponse } =
     useQuery<IPredictPriceData>(
-      ["predictprice", fishName, fishCode, halfYearDate, endDate],
-      () => fetchFishPredictPrice(fishName, halfYearDate, endDate),
+      ["predictprice", fishName, fishCode, halfYearDate, endDate, modelName],
+      () =>
+        fetchFishPredictPrice(
+          fishName,
+          fishCode,
+          halfYearDate,
+          endDate,
+          modelName
+        ),
       {
         enabled: selectedPeriod === "30Days" || selectedPeriod === "180Days",
       }
