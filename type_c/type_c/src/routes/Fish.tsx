@@ -7,33 +7,12 @@ import { fetchFishRealPrice, fetchFishPredictPrice } from "./api";
 import { Helmet } from "react-helmet-async";
 import ApexChart from "react-apexcharts";
 import { useRecoilValue } from "recoil";
-import { endDateAtom, isDarkAtom, halfYearLastAtom } from "../atom";
+import { endDateAtom, halfYearLastAtom } from "../atom";
 
 const Container = styled.div`
   padding: 20px;
   max-width: 800px;
   margin: 0 auto;
-`;
-
-const Header = styled.header`
-  width: 100%;
-  height: 10vh;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 20px;
-  background-color: black;
-  color: white;
-`;
-
-const Nav = styled.nav`
-  display: flex;
-  gap: 20px;
-  a {
-    text-decoration: none;
-    color: white;
-    font-weight: bold;
-  }
 `;
 
 const HighlightedText = styled.span`
@@ -47,7 +26,7 @@ const Title = styled.h1`
   font-size: 36px;
   color: ${(props) => props.theme.accentColor};
   text-align: center;
-  margin: 20px 0;
+  margin: 100px 0;
 `;
 
 const Loader = styled.span`
@@ -147,7 +126,6 @@ function Fish() {
       }
     );
 
-  const isDark = useRecoilValue(isDarkAtom);
   const loading = realPriceLoading || predictPriceLoading;
 
   const adjustPrices = (prices: number[]): number[] => {
@@ -190,15 +168,6 @@ function Fish() {
       <Helmet>
         <title>{fishName} 가격</title>
       </Helmet>
-      <Header>
-        <Nav>
-          <HighlightedText>Type-C</HighlightedText>
-          <Link to={`/`}>Home</Link>
-          <Link to={"/news"}>News</Link>
-          <Link to="/about">About</Link>
-          <Link to="/contact">Contact</Link>
-        </Nav>
-      </Header>
       <Container>
         <Title>{loading ? "Loading..." : fishName}</Title>
 
@@ -270,7 +239,7 @@ function Fish() {
                 ]}
                 options={{
                   theme: {
-                    mode: isDark ? "dark" : "light",
+                    mode: "light",
                   },
                   chart: {
                     height: 500,

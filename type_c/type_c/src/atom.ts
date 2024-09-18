@@ -1,14 +1,9 @@
 import { atom } from "recoil";
 import moment from "moment";
 
-export const isDarkAtom = atom({
-  key: "isDark",
-  default: false,
-});
-
 export const endDateAtom = atom({
-  key: "endDate", // ������ Ű
-  default: moment().format("YYYY-MM-DD"), // �ʱ� ��
+  key: "endDate",
+  default: moment().format("YYYY-MM-DD"),
 });
 
 export const oneWeekDateAtom = atom({

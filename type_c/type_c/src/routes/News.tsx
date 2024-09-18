@@ -10,27 +10,6 @@ const Container = styled.div`
   margin: 0 auto;
 `;
 
-const Header = styled.header`
-  width: 100%;
-  height: 10vh;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 20px;
-  background-color: black;
-  color: white;
-`;
-
-const Nav = styled.nav`
-  display: flex;
-  gap: 20px;
-  a {
-    text-decoration: none;
-    color: white;
-    font-weight: bold;
-  }
-`;
-
 const HighlightedText = styled.span`
   font-size: 18px;
   color: white;
@@ -42,7 +21,7 @@ const Title = styled.h1`
   font-size: 36px;
   color: ${(props) => props.theme.accentColor};
   text-align: center;
-  margin: 20px 0;
+  margin: 100px 0;
 `;
 
 const Loader = styled.span`
@@ -181,15 +160,7 @@ function News() {
       <Helmet>
         <title>News</title>
       </Helmet>
-      <Header>
-        <Nav>
-          <HighlightedText>Type-C</HighlightedText>
-          <Link to={`/`}>Home</Link>
-          <Link to={"/news"}>News</Link>
-          <Link to="/about">About</Link>
-          <Link to="/contact">Contact</Link>
-        </Nav>
-      </Header>
+
       <Container>
         <Title>Today Date: {new Date().toISOString().split("T")[0]}</Title>
         {isLoading ? (

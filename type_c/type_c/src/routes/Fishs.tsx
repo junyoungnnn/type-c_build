@@ -4,12 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { fetchFishList } from "./api";
 import { useQuery } from "react-query";
 import { useRecoilValue, useSetRecoilState } from "recoil";
-import {
-  endDateAtom,
-  isDarkAtom,
-  oneMonthLastAtom,
-  oneWeekDateAtom,
-} from "../atom";
+import { endDateAtom, oneMonthLastAtom, oneWeekDateAtom } from "../atom";
 import { useForm } from "react-hook-form";
 import { FaSun, FaMoon } from "react-icons/fa"; // sun과 moon 아이콘 가져오기
 import { useState } from "react";
@@ -18,30 +13,6 @@ const Container = styled.div`
   padding: 0px 20px;
   max-width: 680px;
   margin: 0 auto;
-`;
-
-const Header = styled.header`
-  width: 100%;
-  height: 10vh;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 20px;
-  background-color: black;
-  color: white;
-  position: relative;
-  left: 0;
-  top: 0;
-`;
-
-const Nav = styled.nav`
-  display: flex;
-  gap: 15px;
-  a {
-    text-decoration: none;
-    color: white;
-    font-weight: bold;
-  }
 `;
 
 const HighlightedText = styled.span`
@@ -86,7 +57,7 @@ const Title = styled.h1`
   font-size: 48px;
   color: ${(props) => props.theme.accentColor};
   text-align: center;
-  margin-top: 20px;
+  margin-top: 100px;
   margin-bottom: 20px;
 `;
 
@@ -160,10 +131,6 @@ interface IData {
 }
 
 function Fishs() {
-  const setDarkAtom = useSetRecoilState(isDarkAtom);
-  const isDarkMode = useRecoilValue(isDarkAtom);
-  const toggleDarkAtom = () => setDarkAtom((prev) => !prev);
-
   const { isLoading: fishListLoading, data: fishListData } =
     useQuery<IFishList>("allFishs", fetchFishList);
 
@@ -186,18 +153,7 @@ function Fishs() {
       <Helmet>
         <title>수산물 가격 예측</title>
       </Helmet>
-      <Header>
-        <Nav>
-          <HighlightedText>Type-C</HighlightedText>
-          <Link to={`/`}>Home</Link>
-          <Link to={"/news"}>News</Link>
-          <Link to="/about">About</Link>
-          <Link to="/contact">Contact</Link>
-        </Nav>
-        <button onClick={toggleDarkAtom}>
-          {isDarkMode ? <FaSun size={20} /> : <FaMoon size={20} />}
-        </button>
-      </Header>
+
       <Container>
         <Title>수산물 가격 예측</Title>
         {fishListLoading ? (
