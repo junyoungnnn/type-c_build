@@ -1,10 +1,10 @@
 {
   "files": {
-    "main.js": "/type-c_build/static/js/main.6ac4fda5.js",
+    "main.js": "/type-c_build/static/js/main.c44e4f8a.js",
     "index.html": "/type-c_build/index.html",
-    "main.6ac4fda5.js.map": "/type-c_build/static/js/main.6ac4fda5.js.map"
+    "main.c44e4f8a.js.map": "/type-c_build/static/js/main.c44e4f8a.js.map"
   },
   "entrypoints": [
-    "static/js/main.6ac4fda5.js"
+    "static/js/main.c44e4f8a.js"
   ]
 }
