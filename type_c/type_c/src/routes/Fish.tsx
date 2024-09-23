@@ -2,25 +2,18 @@
 import React, { useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import styled from "styled-components";
-import { useQuery } from "react-query";
+import { useQuery, useQueries } from "react-query";
 import { fetchFishRealPrice, fetchFishPredictPrice } from "./api";
 import { Helmet } from "react-helmet-async";
-import ApexChart from "react-apexcharts";
 import { useRecoilValue } from "recoil";
 import { endDateAtom } from "../atom";
-import { subMonths, format } from "date-fns"; // date-fns에서 함수 임포트
+import { subMonths, format } from "date-fns";
+import PriceChart from "./PriceChart";
 
 const Container = styled.div`
   padding: 20px;
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
-`;
-
-const HighlightedText = styled.span`
-  font-size: 18px;
-  color: white;
-  font-weight: bold;
-  margin-right: 20px;
 `;
 
 const Title = styled.h1`
@@ -110,63 +103,90 @@ interface NewsItem {
   link: string | null;
 }
 
+interface SeriesData {
+  name: string;
+  data: (number | null)[];
+}
+
 function Fish() {
   const { fishName } = useParams<RouteParams>();
   const [selectedPeriod, setSelectedPeriod] = useState("7Days");
   const [fishCode, setFishCode] = useState("0");
-  const [modelName, setModelName] = useState("lstm");
   const endDate = useRecoilValue(endDateAtom);
 
-  // startDate 계산 (date-fns 사용)
+  // 시작 날짜 계산 (6개월 전)
   const startDate = useMemo(() => {
     const date = subMonths(new Date(endDate), 6);
     return format(date, "yyyy-MM-dd");
   }, [endDate]);
 
-  // realPrice 데이터 fetching
+  // 실제 가격 데이터 페칭
   const {
     data: realPriceDataResponse,
     isLoading: realPriceLoading,
     error: realPriceError,
   } = useQuery<IRealPriceData, Error>(
     ["realprice", fishName, fishCode, startDate, endDate],
-    () => fetchFishRealPrice(fishName, fishCode, startDate, endDate)
-  );
-
-  // predictPrice 데이터 fetching
-  const {
-    data: predictPriceDataResponse,
-    isLoading: predictPriceLoading,
-    error: predictPriceError,
-  } = useQuery<IPredictPriceData, Error>(
-    ["predictprice", fishName, fishCode, startDate, endDate, modelName],
-    () =>
-      fetchFishPredictPrice(fishName, fishCode, startDate, endDate, modelName),
+    () => fetchFishRealPrice(fishName, fishCode, startDate, endDate),
     {
-      enabled: true, // 항상 fetch predictPrice 데이터를 가져옴
+      staleTime: 1000 * 60 * 5, // 5분
+      cacheTime: 1000 * 60 * 10, // 10분
     }
   );
 
+  // 예측 모델 리스트 정의
+  const models = ["linear", "transformer", "lstm"];
+
+  // 여러 모델에 대한 예측 가격 데이터 페칭
+  const predictPriceQueries = useQueries(
+    models.map((model) => ({
+      queryKey: ["predictprice", fishName, fishCode, startDate, endDate, model],
+      queryFn: () =>
+        fetchFishPredictPrice(fishName, fishCode, startDate, endDate, model),
+      enabled: true,
+      staleTime: 1000 * 60 * 5, // 5분
+      cacheTime: 1000 * 60 * 10, // 10분
+    }))
+  );
+
+  // 모든 예측 가격 쿼리의 로딩 및 에러 상태
+  const predictPriceLoading = predictPriceQueries.some(
+    (query) => query.isLoading
+  );
+  const predictPriceError = predictPriceQueries.find(
+    (query) => query.isError
+  )?.error;
+
+  // 전체 로딩 및 에러 상태
   const loading = realPriceLoading || predictPriceLoading;
   const error = realPriceError || predictPriceError;
 
-  // 데이터 정렬
+  // 실제 가격 데이터 정렬
   const sortedRealPriceData = realPriceDataResponse?.data
     ? [...realPriceDataResponse.data].sort(
         (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
       )
     : [];
 
-  const sortedPredictPriceData = predictPriceDataResponse?.data
-    ? [...predictPriceDataResponse.data].sort(
+  // 각 모델별 예측 가격 데이터 정렬
+  const sortedPredictPriceData: { [key: string]: IPredictData[] } = {};
+  predictPriceQueries.forEach((query, index) => {
+    const model = models[index];
+    if (query.data?.data) {
+      sortedPredictPriceData[model] = [...query.data.data].sort(
         (a, b) =>
           new Date(a.predictDate).getTime() - new Date(b.predictDate).getTime()
-      )
-    : [];
+      );
+    } else {
+      sortedPredictPriceData[model] = [];
+    }
+  });
 
   // 공통 날짜 배열 생성
   const realDates = sortedRealPriceData.map((d) => d.date);
-  const predictDates = sortedPredictPriceData.map((d) => d.predictDate);
+  const predictDates = models.flatMap((model) =>
+    sortedPredictPriceData[model].map((d) => d.predictDate)
+  );
   const combinedDates = Array.from(
     new Set([...realDates, ...predictDates])
   ).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
@@ -175,18 +195,26 @@ function Fish() {
   const realPriceMap = new Map(
     sortedRealPriceData.map((d) => [d.date, d.realPrice])
   );
-  const predictPriceMap = new Map(
-    sortedPredictPriceData.map((d) => [d.predictDate, d.predictPrice])
-  );
+
+  const predictPriceMaps: { [key: string]: Map<string, number> } = {};
+  models.forEach((model) => {
+    predictPriceMaps[model] = new Map(
+      sortedPredictPriceData[model].map((d) => [d.predictDate, d.predictPrice])
+    );
+  });
 
   const realPriceDataAligned = combinedDates.map(
     (date) => realPriceMap.get(date) || null
   );
-  const predictPriceDataAligned = combinedDates.map(
-    (date) => predictPriceMap.get(date) || null
-  );
 
-  // 가격 조정 함수 수정
+  const predictPriceDataAligned: { [key: string]: (number | null)[] } = {};
+  models.forEach((model) => {
+    predictPriceDataAligned[model] = combinedDates.map(
+      (date) => predictPriceMaps[model].get(date) || null
+    );
+  });
+
+  // 가격 조정 함수
   const adjustPrices = (prices: (number | null)[]): (number | null)[] => {
     let lastValidPrice: number | null = null;
     return prices.map((price) => {
@@ -199,7 +227,13 @@ function Fish() {
   };
 
   const adjustedRealPriceData = adjustPrices(realPriceDataAligned);
-  const adjustedPredictPriceData = adjustPrices(predictPriceDataAligned);
+
+  const adjustedPredictPriceData: { [key: string]: (number | null)[] } = {};
+  models.forEach((model) => {
+    adjustedPredictPriceData[model] = adjustPrices(
+      predictPriceDataAligned[model]
+    );
+  });
 
   // 기간에 따른 데이터 슬라이싱
   const periodLength = useMemo(() => {
@@ -216,8 +250,34 @@ function Fish() {
   }, [selectedPeriod]);
 
   const slicedRealPriceData = adjustedRealPriceData.slice(-periodLength);
-  const slicedPredictPriceData = adjustedPredictPriceData.slice(-periodLength); // 항상 predictPrice 데이터를 슬라이스
   const slicedCategories = combinedDates.slice(-periodLength);
+
+  // 각 모델별 데이터 슬라이싱
+  const slicedPredictPriceData: { [key: string]: (number | null)[] } = {};
+  models.forEach((model) => {
+    slicedPredictPriceData[model] = adjustedPredictPriceData[model].slice(
+      -periodLength
+    );
+  });
+
+  // 시리즈 데이터 준비
+  const series: SeriesData[] = [
+    {
+      name: "RealPrice",
+      data: slicedRealPriceData,
+    },
+    ...models.map((model) => ({
+      name: `${model.charAt(0).toUpperCase() + model.slice(1)} PredictPrice`,
+      data: slicedPredictPriceData[model],
+    })),
+  ];
+
+  // 콘솔 로그를 통해 데이터 확인 (개발 중)
+  console.log("Adjusted Real Price Data:", adjustedRealPriceData);
+  console.log("Adjusted Predict Price Data:", adjustedPredictPriceData);
+  console.log("Sliced Predict Price Data:", slicedPredictPriceData);
+  console.log("Sliced Categories:", slicedCategories);
+  console.log("Series Data:", series);
 
   return (
     <>
@@ -230,7 +290,7 @@ function Fish() {
         {loading ? (
           <Loader>Loading...</Loader>
         ) : error ? (
-          <ErrorMessage>Error fetching data: {error.message}</ErrorMessage>
+          <ErrorMessage>Error fetching data</ErrorMessage>
         ) : (
           <>
             <ButtonGroup>
@@ -281,93 +341,15 @@ function Fish() {
             </ButtonGroup>
 
             {slicedRealPriceData.length === 0 &&
-            slicedPredictPriceData.length === 0 ? (
+            models.every(
+              (model) => slicedPredictPriceData[model].length === 0
+            ) ? (
               <Loader>No data available for the selected period.</Loader>
             ) : (
-              <ApexChart
-                type="line"
-                series={[
-                  {
-                    name: "RealPrice",
-                    data: slicedRealPriceData,
-                  },
-                  {
-                    name: "PredictPrice",
-                    data: slicedPredictPriceData,
-                  },
-                ]}
-                options={{
-                  theme: {
-                    mode: "light",
-                  },
-                  chart: {
-                    height: 500,
-                    width: 700,
-                    zoom: {
-                      enabled: false,
-                    },
-                    toolbar: {
-                      show: false,
-                    },
-                    background: "transparent",
-                    animations: {
-                      enabled: false,
-                    },
-                  },
-                  title: {
-                    text:
-                      selectedPeriod === "180Days"
-                        ? "180 Days Chart"
-                        : selectedPeriod === "30Days"
-                        ? "30 Days Chart"
-                        : "7 Days Chart",
-                    align: "left",
-                    style: {
-                      fontSize: "14px",
-                      fontWeight: "bold",
-                      fontFamily: "Helvetica, Arial, sans-serif",
-                      color: "#263238",
-                    },
-                  },
-                  stroke: {
-                    width: [5, 5],
-                    curve: "straight",
-                  },
-                  yaxis: {
-                    show: true,
-                    min: 0, // y축 최소값을 0으로 설정
-                  },
-                  xaxis: {
-                    axisBorder: { show: false },
-                    axisTicks: { show: false },
-                    labels: {
-                      show: true,
-                      style: {
-                        colors: "#000000",
-                        fontFamily: "Helvetica, Arial, sans-serif",
-                        fontSize: "12px",
-                      },
-                    },
-                    categories: slicedCategories,
-                  },
-                  fill: {
-                    type: "gradient",
-                    gradient: {
-                      gradientToColors: ["#0be881"],
-                      stops: [0, 100],
-                    },
-                  },
-                  colors: ["#0fbcf9", "#e74c3c"],
-                  tooltip: {
-                    y: {
-                      formatter: (value: number | null) =>
-                        value !== null ? `${value.toFixed(0)}원` : "N/A",
-                    },
-                  },
-                  grid: {
-                    borderColor: "#ffffff",
-                  },
-                }}
+              <PriceChart
+                series={series}
+                categories={slicedCategories}
+                selectedPeriod={selectedPeriod}
               />
             )}
           </>
