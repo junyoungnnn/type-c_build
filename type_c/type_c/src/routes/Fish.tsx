@@ -1,13 +1,14 @@
-import React, { useState } from "react";
-import { useLocation, useParams } from "react-router-dom";
-import { Link } from "react-router-dom";
+// Fish.tsx
+import React, { useState, useMemo } from "react";
+import { useParams } from "react-router-dom";
 import styled from "styled-components";
 import { useQuery } from "react-query";
 import { fetchFishRealPrice, fetchFishPredictPrice } from "./api";
 import { Helmet } from "react-helmet-async";
 import ApexChart from "react-apexcharts";
 import { useRecoilValue } from "recoil";
-import { endDateAtom, halfYearLastAtom } from "../atom";
+import { endDateAtom } from "../atom";
+import { subMonths, format } from "date-fns"; // date-fns에서 함수 임포트
 
 const Container = styled.div`
   padding: 20px;
@@ -30,6 +31,12 @@ const Title = styled.h1`
 `;
 
 const Loader = styled.span`
+  text-align: center;
+  display: block;
+`;
+
+const ErrorMessage = styled.span`
+  color: red;
   text-align: center;
   display: block;
 `;
@@ -96,42 +103,94 @@ interface IPredictData {
   predictPrice: number;
 }
 
+interface NewsItem {
+  num: string;
+  title: string;
+  date: string;
+  link: string | null;
+}
+
 function Fish() {
   const { fishName } = useParams<RouteParams>();
   const [selectedPeriod, setSelectedPeriod] = useState("7Days");
   const [fishCode, setFishCode] = useState("0");
   const [modelName, setModelName] = useState("lstm");
   const endDate = useRecoilValue(endDateAtom);
-  const halfYearDate = useRecoilValue(halfYearLastAtom);
 
-  const { isLoading: realPriceLoading, data: realPriceDataResponse } =
-    useQuery<IRealPriceData>(
-      ["realprice", fishName, fishCode, halfYearDate, endDate],
-      () => fetchFishRealPrice(fishName, fishCode, halfYearDate, endDate)
-    );
+  // startDate 계산 (date-fns 사용)
+  const startDate = useMemo(() => {
+    const date = subMonths(new Date(endDate), 6);
+    return format(date, "yyyy-MM-dd");
+  }, [endDate]);
 
-  const { isLoading: predictPriceLoading, data: predictPriceDataResponse } =
-    useQuery<IPredictPriceData>(
-      ["predictprice", fishName, fishCode, halfYearDate, endDate, modelName],
-      () =>
-        fetchFishPredictPrice(
-          fishName,
-          fishCode,
-          halfYearDate,
-          endDate,
-          modelName
-        ),
-      {
-        enabled: selectedPeriod === "30Days" || selectedPeriod === "180Days",
-      }
-    );
+  // realPrice 데이터 fetching
+  const {
+    data: realPriceDataResponse,
+    isLoading: realPriceLoading,
+    error: realPriceError,
+  } = useQuery<IRealPriceData, Error>(
+    ["realprice", fishName, fishCode, startDate, endDate],
+    () => fetchFishRealPrice(fishName, fishCode, startDate, endDate)
+  );
+
+  // predictPrice 데이터 fetching
+  const {
+    data: predictPriceDataResponse,
+    isLoading: predictPriceLoading,
+    error: predictPriceError,
+  } = useQuery<IPredictPriceData, Error>(
+    ["predictprice", fishName, fishCode, startDate, endDate, modelName],
+    () =>
+      fetchFishPredictPrice(fishName, fishCode, startDate, endDate, modelName),
+    {
+      enabled: true, // 항상 fetch predictPrice 데이터를 가져옴
+    }
+  );
 
   const loading = realPriceLoading || predictPriceLoading;
+  const error = realPriceError || predictPriceError;
 
-  const adjustPrices = (prices: number[]): number[] => {
-    let lastValidPrice = prices.find((price) => price !== 0) || 0;
+  // 데이터 정렬
+  const sortedRealPriceData = realPriceDataResponse?.data
+    ? [...realPriceDataResponse.data].sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      )
+    : [];
+
+  const sortedPredictPriceData = predictPriceDataResponse?.data
+    ? [...predictPriceDataResponse.data].sort(
+        (a, b) =>
+          new Date(a.predictDate).getTime() - new Date(b.predictDate).getTime()
+      )
+    : [];
+
+  // 공통 날짜 배열 생성
+  const realDates = sortedRealPriceData.map((d) => d.date);
+  const predictDates = sortedPredictPriceData.map((d) => d.predictDate);
+  const combinedDates = Array.from(
+    new Set([...realDates, ...predictDates])
+  ).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+
+  // 가격 데이터 매핑
+  const realPriceMap = new Map(
+    sortedRealPriceData.map((d) => [d.date, d.realPrice])
+  );
+  const predictPriceMap = new Map(
+    sortedPredictPriceData.map((d) => [d.predictDate, d.predictPrice])
+  );
+
+  const realPriceDataAligned = combinedDates.map(
+    (date) => realPriceMap.get(date) || null
+  );
+  const predictPriceDataAligned = combinedDates.map(
+    (date) => predictPriceMap.get(date) || null
+  );
+
+  // 가격 조정 함수 수정
+  const adjustPrices = (prices: (number | null)[]): (number | null)[] => {
+    let lastValidPrice: number | null = null;
     return prices.map((price) => {
-      if (price === 0) {
+      if (price === null || price === 0) {
         return lastValidPrice;
       }
       lastValidPrice = price;
@@ -139,29 +198,26 @@ function Fish() {
     });
   };
 
-  const processPriceData = (data: number[], period: string) => {
-    const periodLength = period === "7Days" ? 7 : 30;
-    const slicedData = data.slice(-periodLength);
-    return adjustPrices(slicedData);
-  };
+  const adjustedRealPriceData = adjustPrices(realPriceDataAligned);
+  const adjustedPredictPriceData = adjustPrices(predictPriceDataAligned);
 
-  let realPriceData =
-    realPriceDataResponse?.data.map((data) => data.realPrice) || [];
-  let predictPriceData =
-    predictPriceDataResponse?.data.map((data) => data.predictPrice) || [];
+  // 기간에 따른 데이터 슬라이싱
+  const periodLength = useMemo(() => {
+    switch (selectedPeriod) {
+      case "7Days":
+        return 7;
+      case "30Days":
+        return 30;
+      case "180Days":
+        return 180;
+      default:
+        return 7;
+    }
+  }, [selectedPeriod]);
 
-  let chartCategories =
-    realPriceDataResponse?.data.map((data) => data.date) ||
-    predictPriceDataResponse?.data.map((data) => data.predictDate) ||
-    [];
-
-  if (selectedPeriod === "7Days" || selectedPeriod === "30Days") {
-    realPriceData = processPriceData(realPriceData, selectedPeriod);
-    predictPriceData = processPriceData(predictPriceData, selectedPeriod);
-    chartCategories = chartCategories.slice(-realPriceData.length);
-  } else {
-    realPriceData = adjustPrices(realPriceData);
-  }
+  const slicedRealPriceData = adjustedRealPriceData.slice(-periodLength);
+  const slicedPredictPriceData = adjustedPredictPriceData.slice(-periodLength); // 항상 predictPrice 데이터를 슬라이스
+  const slicedCategories = combinedDates.slice(-periodLength);
 
   return (
     <>
@@ -173,6 +229,8 @@ function Fish() {
 
         {loading ? (
           <Loader>Loading...</Loader>
+        ) : error ? (
+          <ErrorMessage>Error fetching data: {error.message}</ErrorMessage>
         ) : (
           <>
             <ButtonGroup>
@@ -222,7 +280,8 @@ function Fish() {
               </Button>
             </ButtonGroup>
 
-            {realPriceData.length === 0 && predictPriceData.length === 0 ? (
+            {slicedRealPriceData.length === 0 &&
+            slicedPredictPriceData.length === 0 ? (
               <Loader>No data available for the selected period.</Loader>
             ) : (
               <ApexChart
@@ -230,11 +289,11 @@ function Fish() {
                 series={[
                   {
                     name: "RealPrice",
-                    data: realPriceData,
+                    data: slicedRealPriceData,
                   },
                   {
                     name: "PredictPrice",
-                    data: predictPriceData,
+                    data: slicedPredictPriceData,
                   },
                 ]}
                 options={{
@@ -271,11 +330,12 @@ function Fish() {
                     },
                   },
                   stroke: {
-                    width: [5],
+                    width: [5, 5],
                     curve: "straight",
                   },
                   yaxis: {
                     show: true,
+                    min: 0, // y축 최소값을 0으로 설정
                   },
                   xaxis: {
                     axisBorder: { show: false },
@@ -288,7 +348,7 @@ function Fish() {
                         fontSize: "12px",
                       },
                     },
-                    categories: chartCategories,
+                    categories: slicedCategories,
                   },
                   fill: {
                     type: "gradient",
@@ -300,7 +360,8 @@ function Fish() {
                   colors: ["#0fbcf9", "#e74c3c"],
                   tooltip: {
                     y: {
-                      formatter: (value) => `${value?.toFixed(0)}원`,
+                      formatter: (value: number | null) =>
+                        value !== null ? `${value.toFixed(0)}원` : "N/A",
                     },
                   },
                   grid: {
