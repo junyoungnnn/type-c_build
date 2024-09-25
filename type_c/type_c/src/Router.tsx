@@ -5,6 +5,7 @@ import Fishs from "./routes/Fishs";
 import About from "./routes/About";
 import Contact from "./routes/Contact";
 import Header from "./Components/Header";
+import Footer from "./Components/Footer";
 
 function Router() {
   return (
@@ -27,6 +28,7 @@ function Router() {
           <Fishs />
         </Route>
       </Switch>
+      <Footer />
     </HashRouter>
   );
 }
