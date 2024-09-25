@@ -20,6 +20,13 @@ const Col = styled.div`
   align-items: center;
 `;
 
+const HighlightedText = styled.span`
+  font-size: 18px;
+  color: white;
+  font-weight: bold;
+  margin-right: 20px;
+`;
+
 const Logo = styled(motion.svg)`
   margin-right: 50px;
   width: 95px;
@@ -150,6 +157,9 @@ function Header() {
         </Logo>
         */}
         <Items>
+          <Item>
+            <HighlightedText>TYPE-C</HighlightedText>
+          </Item>
           <Item>
             <Link to="/">
               Home {homeMatch?.isExact && <Circle layoutId="circle" />}

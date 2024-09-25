@@ -10,13 +10,6 @@ const Container = styled.div`
   margin: 0 auto;
 `;
 
-const HighlightedText = styled.span`
-  font-size: 18px;
-  color: white;
-  font-weight: bold;
-  margin-right: 20px;
-`;
-
 const Title = styled.h1`
   font-size: 36px;
   color: ${(props) => props.theme.accentColor};
@@ -68,20 +61,6 @@ const Pagination = styled.div`
       cursor: not-allowed;
     }
   }
-`;
-
-const Footer = styled.footer`
-  width: 100%;
-  height: 5vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: black;
-  color: white;
-  margin-top: 20px;
-  position: relative;
-  left: 0;
-  bottom: 0;
 `;
 
 interface INewsItem {
@@ -225,9 +204,6 @@ function News() {
           </>
         )}
       </Container>
-      <Footer>
-        <p>&copy; 2024 수산물 가격 예측. All rights reserved.</p>
-      </Footer>
     </>
   );
 }
