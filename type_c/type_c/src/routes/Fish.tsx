@@ -17,8 +17,8 @@ const Container = styled.div`
 `;
 
 const Title = styled.h1`
-  font-size: 36px;
-  color: ${(props) => props.theme.accentColor};
+  font-size: 48px;
+  color: ${(props) => props.theme.black.veryDark};
   text-align: center;
   margin: 100px 0;
 `;
