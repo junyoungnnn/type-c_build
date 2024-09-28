@@ -145,12 +145,12 @@ const GridItem = styled.div`
   transition: background-color 0.3s ease, color 0.3s ease;
 
   &:hover {
-    background-color: ${(props) => props.theme.accentColor};
+    background-color: ${(props) => props.theme.blue.darker};
     color: white;
   }
 
   &:focus {
-    outline: 2px solid ${(props) => props.theme.accentColor};
+    outline: 2px solid ${(props) => props.theme.blue.darker};
   }
 `;
 

@@ -18,5 +18,18 @@ declare module "styled-components" {
       darker: string;
       lighter: string;
     };
+    blue: {
+      dodger: string;
+      darker: string;
+    };
+    borderColor: string; // Light Gray
+    headerBgColor: string; // Very Light Gray
+    headerTextColor: string; // Dark Gray
+    rowEvenBgColor: string; // Off-White for even rows
+    rowHoverBgColor: string; // Slightly darker for hover
+    linkColor: string; // DodgerBlue
+    linkHoverColor: string; // Darker Blue
+    disabledBgColor: string; // Gray
+    disabledTextColor: string; // Light Gray
   }
 }

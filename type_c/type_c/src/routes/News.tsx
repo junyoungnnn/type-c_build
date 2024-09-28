@@ -6,60 +6,111 @@ import { Link } from "react-router-dom";
 
 const Container = styled.div`
   padding: 20px;
-  max-width: 800px;
+  max-width: 1000px;
   margin: 0 auto;
+  background-color: ${(props) => props.theme.background};
+  min-height: 100vh;
 `;
 
 const Title = styled.h1`
   font-size: 36px;
-  color: ${(props) => props.theme.accentColor};
+  color: ${(props) => props.theme.blue.darker};
   text-align: center;
-  margin: 100px 0;
+  margin: 50px 0 30px 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 `;
 
 const Loader = styled.span`
   text-align: center;
   display: block;
+  font-size: 18px;
+  color: ${(props) => props.theme.textColor};
+  margin-top: 50px;
+`;
+
+const ErrorMessage = styled.span`
+  text-align: center;
+  display: block;
+  font-size: 18px;
+  color: red;
+  margin-top: 50px;
+`;
+
+const NewsTableContainer = styled.div`
+  overflow-x: auto;
 `;
 
 const NewsList = styled.table`
   width: 100%;
   border-collapse: collapse;
+  min-width: 600px;
 
   th,
   td {
-    padding: 8px;
+    padding: 12px 15px;
     border: 1px solid ${(props) => props.theme.borderColor};
     text-align: left;
+    font-size: 16px;
   }
 
   th {
-    background-color: ${(props) => props.theme.bgColor};
+    background-color: ${(props) => props.theme.headerBgColor};
+    color: ${(props) => props.theme.headerTextColor};
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  tbody tr:nth-child(even) {
+    background-color: ${(props) => props.theme.rowEvenBgColor};
+  }
+
+  tbody tr:hover {
+    background-color: ${(props) => props.theme.rowHoverBgColor};
+    cursor: pointer;
+  }
+
+  a {
+    color: ${(props) => props.theme.black.veryDark};
+    text-decoration: none;
+    transition: color 0.3s ease;
+
+    &:hover {
+      color: ${(props) => props.theme.linkHoverColor};
+      text-decoration: underline;
+    }
   }
 `;
 
 const Pagination = styled.div`
   display: flex;
   justify-content: center;
-  margin-top: 20px;
+  margin: 30px 0;
+  flex-wrap: wrap;
+  gap: 8px;
+`;
 
-  button {
-    margin: 0 5px;
-    padding: 8px 12px;
-    background-color: ${(props) => props.theme.bgColor};
-    border: 1px solid ${(props) => props.theme.borderColor};
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+const PageButton = styled.button<{ active?: boolean }>`
+  padding: 10px 16px;
+  background-color: ${(props) =>
+    props.active ? props.theme.blue.darker : props.theme.bgColor};
+  color: ${(props) => (props.active ? "#ffffff" : props.theme.textColor)};
+  border: 1px solid ${(props) => props.theme.borderColor};
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s ease, color 0.3s ease;
 
-    &:hover {
-      background-color: ${(props) => props.theme.accentColor};
-      color: white;
-    }
+  &:hover:not(:disabled) {
+    background-color: ${(props) => props.theme.blue.darker};
+    color: #ffffff;
+  }
 
-    &:disabled {
-      background-color: ${(props) => props.theme.disabledBgColor};
-      cursor: not-allowed;
-    }
+  &:disabled {
+    background-color: ${(props) => props.theme.disabledBgColor};
+    color: ${(props) => props.theme.disabledTextColor};
+    cursor: not-allowed;
   }
 `;
 
@@ -88,7 +139,6 @@ function News() {
     setIsLoading(true);
     setError(null);
 
-    // 캐시에 해당 페이지 데이터가 있으면 사용
     if (newsItemsCache[pageNumber]) {
       setNewsItems(newsItemsCache[pageNumber]);
       setIsLoading(false);
@@ -131,75 +181,86 @@ function News() {
   }, [pageGroup]);
 
   if (error) {
-    return <Loader>Error fetching news.</Loader>;
+    return (
+      <Container>
+        <Helmet>
+          <title>News</title>
+        </Helmet>
+        <Title>오늘의 날짜: {new Date().toISOString().split("T")[0]}</Title>
+        <ErrorMessage>뉴스를 불러오는 중 오류가 발생했습니다.</ErrorMessage>
+      </Container>
+    );
   }
 
   return (
     <>
       <Helmet>
-        <title>News</title>
+        <title>수산물 뉴스</title>
       </Helmet>
 
       <Container>
-        <Title>Today Date: {new Date().toISOString().split("T")[0]}</Title>
+        <Title>오늘의 날짜: {new Date().toISOString().split("T")[0]}</Title>
         {isLoading ? (
-          <Loader>Loading...</Loader>
+          <Loader>로딩 중...</Loader>
         ) : (
           <>
-            <NewsList>
-              <thead>
-                <tr>
-                  <th>Number</th>
-                  <th>Title</th>
-                  <th>Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {newsItems && newsItems.length > 0 ? (
-                  newsItems.map((item, index) => (
-                    <tr key={index}>
-                      <td>{item.num}</td>
-                      <td>
-                        {item.link ? (
-                          <a
-                            href={item.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {item.title}
-                          </a>
-                        ) : (
-                          item.title
-                        )}
-                      </td>
-                      <td>{item.date}</td>
-                    </tr>
-                  ))
-                ) : (
+            <NewsTableContainer>
+              <NewsList>
+                <thead>
                   <tr>
-                    <td colSpan={3}>No news available.</td>
+                    <th>번호</th>
+                    <th>제목</th>
+                    <th>날짜</th>
                   </tr>
-                )}
-              </tbody>
-            </NewsList>
+                </thead>
+                <tbody>
+                  {newsItems && newsItems.length > 0 ? (
+                    newsItems.map((item, index) => (
+                      <tr key={index}>
+                        <td>{item.num}</td>
+                        <td>
+                          {item.link ? (
+                            <a
+                              href={item.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {item.title}
+                            </a>
+                          ) : (
+                            item.title
+                          )}
+                        </td>
+                        <td>{item.date}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={3}>뉴스가 없습니다.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </NewsList>
+            </NewsTableContainer>
 
             <Pagination>
-              <button onClick={handlePrevGroup} disabled={pageGroup === 0}>
-                Prev
-              </button>
+              <PageButton onClick={handlePrevGroup} disabled={pageGroup === 0}>
+                이전
+              </PageButton>
               {Array.from({ length: pageCount }, (_, i) => {
                 const pageNumber = startPage + i;
                 return (
-                  <button
+                  <PageButton
                     key={pageNumber}
                     onClick={() => handlePageClick(pageNumber)}
-                    disabled={page === pageNumber}
+                    active={page === pageNumber}
+                    disabled={pageNumber > endPage}
                   >
                     {pageNumber}
-                  </button>
+                  </PageButton>
                 );
               })}
-              <button onClick={handleNextGroup}>Next</button>
+              <PageButton onClick={handleNextGroup}>다음</PageButton>
             </Pagination>
           </>
         )}
