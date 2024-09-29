@@ -258,11 +258,29 @@ function Fish() {
     })),
   ];
 
+  for (let index = 0; index < 4; index++) {
+    const firstSeries = series[index];
+    const dataArray = firstSeries.data;
+
+    // Get the first value in dataArray
+    const firstValue = dataArray[0];
+
+    // Check if all values in dataArray are identical to firstValue
+    const allValuesIdentical = dataArray.every((value) => value === firstValue);
+
+    if (allValuesIdentical) {
+      // Check if data[2] exists and is not null
+      if (series[index].data.length > 2 && series[index].data[2] !== null) {
+        series[index].data[2] = (series[index].data[2] as number) + 1;
+      }
+    }
+  }
+
   // 콘솔 로그를 통해 데이터 확인 (개발 중)
-  console.log("Adjusted Real Price Data:", adjustedRealPriceData);
-  console.log("Adjusted Predict Price Data:", adjustedPredictPriceData);
-  console.log("Sliced Predict Price Data:", slicedPredictPriceData);
-  console.log("Sliced Categories:", slicedCategories);
+  // console.log("Adjusted Real Price Data:", adjustedRealPriceData);
+  // console.log("Adjusted Predict Price Data:", adjustedPredictPriceData);
+  // console.log("Sliced Predict Price Data:", slicedPredictPriceData);
+  // console.log("Sliced Categories:", slicedCategories);
   console.log("Series Data:", series);
 
   return (
