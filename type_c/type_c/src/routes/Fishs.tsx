@@ -11,17 +11,20 @@ import useWindowDimensions from "../Components/useWidowDimensions";
 const Wrapper = styled.div`
   background-color: ${(props) => props.theme.white.lighter};
   padding-bottom: 200px;
+  overflow-x: hidden; /* 가로 오버플로우 숨기기 추가 */
 `;
 
 const Slider = styled.div`
   position: relative;
   top: -300px;
+  width: 90%; /* 너비를 80%로 설정 */
+  margin: 0 auto; /* 가로 중앙 정렬 */
 `;
 
 const Row = styled(motion.div)`
   display: grid;
   gap: 10px;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   position: absolute;
   width: 100%;
 `;
@@ -110,13 +113,16 @@ const infoVariants = {
   },
 };
 
+// Styled Components
 const FishGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  grid-template-rows: repeat(4, auto);
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(6, auto);
   gap: 10px;
   margin-top: 50px;
-  padding: 0 20px;
+  padding: 50px 20px 0 20px; /* 위쪽 패딩을 50px로 설정 */
+  width: 80%; /* 너비를 80%로 설정 */
+  margin: 0 auto; /* 가로 중앙 정렬 */
 
   @media (max-width: 1024px) {
     grid-template-columns: repeat(5, 1fr);
@@ -189,7 +195,7 @@ interface IData {
   fishId: number;
 }
 
-const offset = 6;
+const offset = 5;
 
 function Fishs() {
   const width = useWindowDimensions();

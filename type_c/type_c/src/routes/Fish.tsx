@@ -10,52 +10,15 @@ import { endDateAtom } from "../atom";
 import { subMonths, format } from "date-fns";
 import PriceChart from "./PriceChart";
 
-const Container = styled.div`
-  padding: 20px;
-  max-width: 900px;
-  margin: 0 auto;
-`;
-
-const Title = styled.h1`
-  font-size: 48px;
-  color: ${(props) => props.theme.black.veryDark};
-  text-align: center;
-  margin: 100px 0;
-`;
-
-const Loader = styled.span`
-  text-align: center;
-  display: block;
-`;
-
-const ErrorMessage = styled.span`
-  color: red;
-  text-align: center;
-  display: block;
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  justify-content: center;
-  margin: 20px 0;
-  gap: 15px;
-`;
-
-const Button = styled.button<{ active: boolean }>`
-  padding: 10px 20px;
-  background-color: ${(props) =>
-    props.active ? props.theme.accentColor : "#444"};
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background-color 0.3s;
-
-  &:hover {
-    background-color: ${(props) => props.theme.accentColor};
-  }
-`;
+// 스타일드 컴포넌트 임포트
+import {
+  Container,
+  Title,
+  Loader,
+  ErrorMessage,
+  ButtonGroup,
+  Button,
+} from "./FishStyles";
 
 interface RouteParams {
   fishName: string;
@@ -96,8 +59,33 @@ interface SeriesData {
 
 function Fish() {
   const { fishName } = useParams<RouteParams>();
+
+  // 물고기별 사용 가능한 fishCode 맵핑
+  const fishAvailableCodes: { [key: string]: string[] } = {
+    가자미: ["0"], // 활어
+    갈치: ["1"], // 선어
+    고등어: ["1"],
+    대구: ["1"],
+    돔: ["0"],
+    방어: ["0"],
+    삼치: ["1"],
+    우럭: ["0"],
+    장어: ["1"],
+    전갱이: ["1"],
+    // 필요한 경우 다른 물고기도 추가
+  };
+
+  const fishCodeLabels: { [key: string]: string } = {
+    "0": "활어",
+    "1": "선어",
+    "2": "냉동",
+    "3": "가공",
+  };
+
+  // fishName에 따른 기본 fishCode 설정
+  const defaultFishCode = fishAvailableCodes[fishName]?.[0] || "0";
+  const [fishCode, setFishCode] = useState(defaultFishCode);
   const [selectedPeriod, setSelectedPeriod] = useState("7Days");
-  const [fishCode, setFishCode] = useState("0");
   const endDate = useRecoilValue(endDateAtom);
 
   // 시작 날짜 계산 (6개월 전)
@@ -258,30 +246,21 @@ function Fish() {
     })),
   ];
 
+  // 모든 시리즈의 값들이 같은경우 2번 데이터의 값 +1
   for (let index = 0; index < 4; index++) {
     const firstSeries = series[index];
     const dataArray = firstSeries.data;
 
-    // Get the first value in dataArray
     const firstValue = dataArray[0];
 
-    // Check if all values in dataArray are identical to firstValue
     const allValuesIdentical = dataArray.every((value) => value === firstValue);
 
     if (allValuesIdentical) {
-      // Check if data[2] exists and is not null
       if (series[index].data.length > 2 && series[index].data[2] !== null) {
         series[index].data[2] = (series[index].data[2] as number) + 1;
       }
     }
   }
-
-  // 콘솔 로그를 통해 데이터 확인 (개발 중)
-  // console.log("Adjusted Real Price Data:", adjustedRealPriceData);
-  // console.log("Adjusted Predict Price Data:", adjustedPredictPriceData);
-  // console.log("Sliced Predict Price Data:", slicedPredictPriceData);
-  // console.log("Sliced Categories:", slicedCategories);
-  console.log("Series Data:", series);
 
   return (
     <>
@@ -298,30 +277,16 @@ function Fish() {
         ) : (
           <>
             <ButtonGroup>
-              <Button
-                onClick={() => setFishCode("0")}
-                active={fishCode === "0"}
-              >
-                활어
-              </Button>
-              <Button
-                onClick={() => setFishCode("1")}
-                active={fishCode === "1"}
-              >
-                선어
-              </Button>
-              <Button
-                onClick={() => setFishCode("2")}
-                active={fishCode === "2"}
-              >
-                냉동
-              </Button>
-              <Button
-                onClick={() => setFishCode("3")}
-                active={fishCode === "3"}
-              >
-                가공
-              </Button>
+              {Object.entries(fishCodeLabels).map(([code, label]) => (
+                <Button
+                  key={code}
+                  onClick={() => setFishCode(code)}
+                  active={fishCode === code}
+                  disabled={!fishAvailableCodes[fishName]?.includes(code)}
+                >
+                  {label}
+                </Button>
+              ))}
             </ButtonGroup>
             <ButtonGroup>
               <Button

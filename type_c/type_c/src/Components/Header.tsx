@@ -78,17 +78,22 @@ const Circle = styled(motion.span)`
   background-color: ${(props) => props.theme.red};
 `;
 
-const Input = styled(motion.input)`
+const Select = styled(motion.select)`
   transform-origin: right center;
   position: absolute;
   right: 0px;
   padding: 5px 10px;
-  padding-left: 40px;
+  padding-left: 10px;
   z-index: -1;
   color: white;
   font-size: 16px;
   background-color: transparent;
   border: 1px solid ${(props) => props.theme.white.lighter};
+  appearance: none; /* 기본 화살표 제거 */
+
+  option {
+    color: black; /* 옵션의 텍스트 색상 */
+  }
 `;
 
 const logoVariants = {
@@ -111,6 +116,24 @@ const navVariants = {
     backgroundColor: "rgba(0, 0, 0, 1)",
   },
 };
+
+const sites = [
+  { name: "경제/인문사회연구회", url: "https://www.nrc.re.kr/index.es?sid=a1" },
+  { name: "해양수산부", url: "https://www.mof.go.kr/index.do" },
+  { name: "정부24", url: "https://www.gov.kr/portal/main/nologin" },
+  { name: "국립수산과학원", url: "https://www.nifs.go.kr/main.do" },
+  {
+    name: "농림축산식품부",
+    url: "https://www.mafra.go.kr/sites/home/index.do",
+  },
+  { name: "국립해양조사원", url: "https://www.khoa.go.kr/" },
+  {
+    name: "해양수산통계시스템",
+    url: "https://www.mof.go.kr/statPortal/main/portalMain.do",
+  },
+  { name: "한국농림수산정보센터", url: "https://www.epis.or.kr/main/view" },
+  { name: "한국은행경제통계시스템", url: "https://ecos.bok.or.kr/#/" },
+];
 
 function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -140,6 +163,16 @@ function Header() {
       }
     });
   }, [scrollY, navAnimation]);
+
+  const [selectedSite, setSelectedSite] = useState("");
+
+  const handleSiteChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedUrl = event.target.value;
+    if (selectedUrl) {
+      window.open(selectedUrl, "_blank");
+      setSelectedSite(""); // 선택 후 초기화
+    }
+  };
   return (
     <Nav variants={navVariants} animate={navAnimation} initial={"top"}>
       <Col>
@@ -198,12 +231,20 @@ function Header() {
               clipRule="evenodd"
             ></path>
           </motion.svg>
-          <Input
+          <Select
             animate={inputAnimation}
             initial={{ scaleX: 0 }}
             transition={{ type: "linear" }}
-            placeholder="Search Fish..."
-          />
+            value={selectedSite}
+            onChange={handleSiteChange}
+          >
+            <option value="">관련 사이트...</option>
+            {sites.map((site) => (
+              <option key={site.url} value={site.url}>
+                {site.name}
+              </option>
+            ))}
+          </Select>
         </Search>
       </Col>
     </Nav>

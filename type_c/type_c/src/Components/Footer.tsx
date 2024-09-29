@@ -2,7 +2,7 @@ import styled from "styled-components";
 
 const FooterWrapper = styled.footer`
   width: 100%;
-  height: 5vh;
+  height: 10vh;
   display: flex;
   justify-content: center;
   align-items: center;

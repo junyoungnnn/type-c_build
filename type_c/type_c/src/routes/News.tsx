@@ -16,7 +16,7 @@ const Title = styled.h1`
   font-size: 36px;
   color: ${(props) => props.theme.blue.darker};
   text-align: center;
-  margin: 50px 0 30px 0;
+  margin: 100px 0 50px 0;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 `;
 
