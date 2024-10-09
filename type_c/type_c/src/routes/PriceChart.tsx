@@ -91,7 +91,7 @@ const PriceChart: React.FC<PriceChartProps> = ({
               stops: [0, 100],
             },
           },
-          colors: ["#0fbcf9", "#ff9f43", "#1e90ff", "#e74c3c"], // 각 시리즈별 색상
+          colors: ["#0be881", "#ff9f43", "#1e90ff", "#e74c3c"],
           tooltip: {
             y: {
               formatter: (value: number | null) =>
