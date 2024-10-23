@@ -204,11 +204,6 @@ function Header() {
             </Link>
           </Item>
           <Item>
-            <Link to="/about">
-              About {aboutMatch && <Circle layoutId="circle" />}
-            </Link>
-          </Item>
-          <Item>
             <Link to="/contact">
               Contact {contactMatch && <Circle layoutId="circle" />}
             </Link>

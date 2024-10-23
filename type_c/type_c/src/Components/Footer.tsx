@@ -8,7 +8,7 @@ const FooterWrapper = styled.footer`
   align-items: center;
   background-color: black;
   color: white;
-  margin-top: 20px;
+  margin-top: 0px;
 `;
 
 function Footer() {
