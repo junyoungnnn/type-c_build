@@ -57,7 +57,7 @@ const PriceChart: React.FC<PriceChartProps> = ({
             },
           },
           stroke: {
-            width: [5, 3, 3, 3], // RealPrice는 두껍게, PredictPrice는 얇게
+            width: [3, 3, 3, 3],
             curve: "straight",
           },
           yaxis: {

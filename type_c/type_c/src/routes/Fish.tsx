@@ -7,7 +7,7 @@ import { fetchFishRealPrice, fetchFishPredictPrice } from "./api";
 import { Helmet } from "react-helmet-async";
 import { useRecoilValue } from "recoil";
 import { endDateAtom } from "../atom";
-import { subMonths, format } from "date-fns";
+import { subMonths, format, subDays } from "date-fns";
 import PriceChart from "./PriceChart";
 
 // 스타일드 컴포넌트 임포트
@@ -19,6 +19,30 @@ import {
   ButtonGroup,
   Button,
 } from "./FishStyles";
+
+const TodayPricesContainer = styled.div`
+  margin-top: 30px;
+  padding: 20px;
+  background-color: ${(props) => props.theme.white.darker};
+  border-radius: 10px;
+`;
+
+const PriceItem = styled.div`
+  margin-bottom: 10px;
+  font-size: 18px;
+  color: ${(props) => props.theme.black.veryDark};
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const ModelName = styled.span`
+  font-weight: bold;
+`;
+
+const PriceValue = styled.span`
+  color: ${(props) => props.theme.black.darker};
+`;
 
 interface RouteParams {
   fishName: string;
@@ -43,13 +67,6 @@ interface IPredictData {
   fishName: string;
   predictDate: string;
   predictPrice: number;
-}
-
-interface NewsItem {
-  num: string;
-  title: string;
-  date: string;
-  link: string | null;
 }
 
 interface SeriesData {
@@ -94,7 +111,7 @@ function Fish() {
     return format(date, "yyyy-MM-dd");
   }, [endDate]);
 
-  // 실제 가격 데이터 페칭
+  // 실제 가격 데이터 페칭 (변경 없음)
   const {
     data: realPriceDataResponse,
     isLoading: realPriceLoading,
@@ -246,8 +263,8 @@ function Fish() {
     })),
   ];
 
-  // 모든 시리즈의 값들이 같은경우 2번 데이터의 값 +1
-  for (let index = 0; index < 4; index++) {
+  // 모든 시리즈의 값들이 같은 경우 처리
+  for (let index = 0; index < series.length; index++) {
     const firstSeries = series[index];
     const dataArray = firstSeries.data;
 
@@ -261,6 +278,35 @@ function Fish() {
       }
     }
   }
+
+  // 오늘의 모델별 가격 추출 수정
+  // 오늘 날짜 계산
+  const today = format(new Date(endDate), "yyyy-MM-dd");
+
+  // 오늘의 모델별 가격 추출 (데이터가 없는 경우 전날의 가격을 가져옴)
+  const todayPrices: { [key: string]: { price: number; date: string } | null } =
+    {};
+
+  models.forEach((model) => {
+    const modelData = sortedPredictPriceData[model];
+
+    // 오늘부터 최대 7일 전까지 탐색
+    let dateToCheck = new Date(endDate);
+    let foundData = null;
+
+    for (let i = 0; i < 7; i++) {
+      const dateString = format(dateToCheck, "yyyy-MM-dd");
+      const data = modelData.find((d) => d.predictDate === dateString);
+      if (data) {
+        foundData = { price: data.predictPrice, date: dateString };
+        break;
+      }
+      // 하루 전으로 이동
+      dateToCheck = subDays(dateToCheck, 1);
+    }
+
+    todayPrices[model] = foundData;
+  });
 
   return (
     <>
@@ -315,11 +361,35 @@ function Fish() {
             ) ? (
               <Loader>No data available for the selected period.</Loader>
             ) : (
-              <PriceChart
-                series={series}
-                categories={slicedCategories}
-                selectedPeriod={selectedPeriod}
-              />
+              <>
+                <PriceChart
+                  series={series}
+                  categories={slicedCategories}
+                  selectedPeriod={selectedPeriod}
+                />
+                {/* 오늘의 모델별 가격 표시 */}
+                <TodayPricesContainer>
+                  <h2 style={{ textAlign: "center", marginBottom: "20px" }}>
+                    오늘의 가격 예측
+                  </h2>
+                  {models.map((model) => (
+                    <PriceItem key={model}>
+                      <ModelName>
+                        {model.charAt(0).toUpperCase() + model.slice(1)} 모델
+                      </ModelName>
+                      <PriceValue>
+                        {todayPrices[model]
+                          ? `${todayPrices[
+                              model
+                            ]?.price.toLocaleString()} 원 (${
+                              todayPrices[model]?.date
+                            })`
+                          : "데이터 없음"}
+                      </PriceValue>
+                    </PriceItem>
+                  ))}
+                </TodayPricesContainer>
+              </>
             )}
           </>
         )}
