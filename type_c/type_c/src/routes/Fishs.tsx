@@ -213,7 +213,7 @@ const Title = styled.h1`
   color: ${(props) => props.theme.white.darker};
   text-align: center;
   margin-top: 20px;
-  margin-bottom: 50%;
+  margin-bottom: 40%;
 
   @media (max-width: 768px) {
     font-size: 36px;
