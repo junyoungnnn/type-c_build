@@ -1,3 +1,5 @@
+// Header.tsx
+
 import { Link, useRouteMatch } from "react-router-dom";
 import styled from "styled-components";
 import { motion, useAnimation, useScroll } from "framer-motion";
@@ -5,14 +7,20 @@ import { useEffect, useState } from "react";
 
 const Nav = styled(motion.nav)`
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between; /* 좌우 끝으로 배치 */
   position: fixed;
   width: 100%;
   top: 0;
   font-size: 14px;
   padding: 20px 60px;
   color: white;
+  background-color: rgba(0, 0, 0, 1);
+  z-index: 10;
+
+  @media (max-width: 480px) {
+    padding: 10px 20px;
+  }
 `;
 
 const Col = styled.div`
@@ -25,22 +33,35 @@ const HighlightedText = styled.span`
   color: white;
   font-weight: bold;
   margin-right: 20px;
-`;
 
-const Logo = styled(motion.svg)`
-  margin-right: 50px;
-  width: 95px;
-  height: 25px;
-  fill: ${(props) => props.theme.red};
-  path {
-    stroke-width: 6px;
-    stroke: white;
+  @media (max-width: 768px) {
+    font-size: 16px;
+    margin-right: 10px;
   }
 `;
 
-const Items = styled.ul`
+interface ItemsProps {
+  menuOpen: boolean;
+}
+
+const Items = styled.ul<ItemsProps>`
   display: flex;
   align-items: center;
+  margin-left: 20px;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: flex-start;
+    background-color: rgba(0, 0, 0, 0.9);
+    position: fixed;
+    z-index: 9;
+    top: 45px; /* 메뉴 아이콘과 겹치지 않도록 조정 */
+    left: 0;
+    width: 100%;
+    padding: 10px 20px;
+    display: ${(props) => (props.menuOpen ? "flex" : "none")};
+    margin-left: 0;
+  }
 `;
 
 const Item = styled.li`
@@ -48,21 +69,43 @@ const Item = styled.li`
   color: ${(props) => props.theme.white.darker};
   transition: color 0.3s ease-in-out;
   position: relative;
-  display: flex;
-  justify-content: center;
-  flex-direction: column;
+
   &:hover {
     color: ${(props) => props.theme.white.lighter};
   }
+
+  @media (max-width: 480px) {
+    margin: 10px 0;
+  }
 `;
 
-const Search = styled.span`
+const MenuIcon = styled.div`
+  display: none;
+  cursor: pointer;
+
+  svg {
+    fill: white;
+    width: 24px;
+    height: 24px;
+  }
+
+  @media (max-width: 480px) {
+    display: block;
+  }
+`;
+
+const Search = styled.div`
   color: white;
   display: flex;
   align-items: center;
   position: relative;
+
   svg {
     height: 25px;
+  }
+
+  @media (max-width: 480px) {
+    display: none; /* 모바일에서 검색 아이콘 숨김 */
   }
 `;
 
@@ -89,10 +132,10 @@ const Select = styled(motion.select)`
   font-size: 16px;
   background-color: transparent;
   border: 1px solid ${(props) => props.theme.white.lighter};
-  appearance: none; /* 기본 화살표 제거 */
+  appearance: none;
 
   option {
-    color: black; /* 옵션의 텍스트 색상 */
+    color: black;
   }
 `;
 
@@ -119,31 +162,19 @@ const navVariants = {
 
 const sites = [
   { name: "경제/인문사회연구회", url: "https://www.nrc.re.kr/index.es?sid=a1" },
-  { name: "해양수산부", url: "https://www.mof.go.kr/index.do" },
-  { name: "정부24", url: "https://www.gov.kr/portal/main/nologin" },
-  { name: "국립수산과학원", url: "https://www.nifs.go.kr/main.do" },
-  {
-    name: "농림축산식품부",
-    url: "https://www.mafra.go.kr/sites/home/index.do",
-  },
-  { name: "국립해양조사원", url: "https://www.khoa.go.kr/" },
-  {
-    name: "해양수산통계시스템",
-    url: "https://www.mof.go.kr/statPortal/main/portalMain.do",
-  },
-  { name: "한국농림수산정보센터", url: "https://www.epis.or.kr/main/view" },
-  { name: "한국은행경제통계시스템", url: "https://ecos.bok.or.kr/#/" },
+  // 다른 사이트들...
 ];
 
 function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false); // 모바일 메뉴 상태
   const homeMatch = useRouteMatch("/");
   const newsMatch = useRouteMatch("/news");
-  const aboutMatch = useRouteMatch("/about");
   const contactMatch = useRouteMatch("/contact");
   const inputAnimation = useAnimation();
   const navAnimation = useAnimation();
   const { scrollY } = useScroll();
+
   const toggleSearch = () => {
     if (searchOpen) {
       inputAnimation.start({
@@ -154,6 +185,7 @@ function Header() {
     }
     setSearchOpen((prev) => !prev);
   };
+
   useEffect(() => {
     scrollY.onChange(() => {
       if (scrollY.get() > 80) {
@@ -173,48 +205,69 @@ function Header() {
       setSelectedSite(""); // 선택 후 초기화
     }
   };
+
+  const toggleMenu = () => {
+    setMenuOpen((prev) => !prev);
+  };
+
+  const handleMenuItemClick = () => {
+    setMenuOpen(false);
+  };
+
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 480);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 480);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   return (
     <Nav variants={navVariants} animate={navAnimation} initial={"top"}>
+      {/* 왼쪽 영역: 로고와 메뉴 아이템들 */}
       <Col>
-        {/*
-        <Logo
-          variants={logoVariants}
-          whileHover="active"
-          animate="normal"
-          xmlns="http://www.w3.org/2000/svg"
-          width="1024"
-          height="276.742"
-          viewBox="0 0 1024 276.742"
-        >
-          <motion.path d="M140.803 258.904c-15.404 2.705-31.079 3.516-47.294 5.676l-49.458-144.856v151.073c-15.404 1.621-29.457 3.783-44.051 5.945v-276.742h41.08l56.212 157.021v-157.021h43.511v258.904zm85.131-157.558c16.757 0 42.431-.811 57.835-.811v43.24c-19.189 0-41.619 0-57.835.811v64.322c25.405-1.621 50.809-3.785 76.482-4.596v41.617l-119.724 9.461v-255.39h119.724v43.241h-76.482v58.105zm237.284-58.104h-44.862v198.908c-14.594 0-29.188 0-43.239.539v-199.447h-44.862v-43.242h132.965l-.002 43.242zm70.266 55.132h59.187v43.24h-59.187v98.104h-42.433v-239.718h120.808v43.241h-78.375v55.133zm148.641 103.507c24.594.539 49.456 2.434 73.51 3.783v42.701c-38.646-2.434-77.293-4.863-116.75-5.676v-242.689h43.24v201.881zm109.994 49.457c13.783.812 28.377 1.623 42.43 3.242v-254.58h-42.43v251.338zm231.881-251.338l-54.863 131.615 54.863 145.127c-16.217-2.162-32.432-5.135-48.648-7.838l-31.078-79.994-31.617 73.51c-15.678-2.705-30.812-3.516-46.484-5.678l55.672-126.75-50.269-129.992h46.482l28.377 72.699 30.27-72.699h47.295z" />
-        </Logo>
-        */}
-        <Items>
-          <Item>
-            <HighlightedText>TYPE-C</HighlightedText>
-          </Item>
-          <Item>
-            <Link to="/">
-              Home {homeMatch?.isExact && <Circle layoutId="circle" />}
-            </Link>
-          </Item>
-          <Item>
-            <Link to="/news">
-              News {newsMatch && <Circle layoutId="circle" />}
-            </Link>
-          </Item>
-          <Item>
-            <Link to="/contact">
-              Contact {contactMatch && <Circle layoutId="circle" />}
-            </Link>
-          </Item>
-        </Items>
+        <Link to="/">
+          <HighlightedText>TYPE-C</HighlightedText>
+        </Link>
+        {(!isMobile || menuOpen) && (
+          <Items menuOpen={menuOpen}>
+            <Item onClick={handleMenuItemClick}>
+              <Link to="/">
+                Home {homeMatch?.isExact && <Circle layoutId="circle" />}
+              </Link>
+            </Item>
+            <Item onClick={handleMenuItemClick}>
+              <Link to="/news">
+                News {newsMatch && <Circle layoutId="circle" />}
+              </Link>
+            </Item>
+            <Item onClick={handleMenuItemClick}>
+              <Link to="/contact">
+                Contact {contactMatch && <Circle layoutId="circle" />}
+              </Link>
+            </Item>
+          </Items>
+        )}
       </Col>
-      <Col>
+      {/* 모바일에서 메뉴 아이콘 표시 */}
+      {isMobile && (
+        <MenuIcon onClick={toggleMenu}>
+          <svg viewBox="0 0 100 80" width="30" height="30">
+            <rect width="100" height="10"></rect>
+            <rect y="30" width="100" height="10"></rect>
+            <rect y="60" width="100" height="10"></rect>
+          </svg>
+        </MenuIcon>
+      )}
+      {/* 데스크톱에서의 검색 아이콘 */}
+      {!menuOpen && !isMobile && (
         <Search>
           <motion.svg
             onClick={toggleSearch}
-            animate={{ x: searchOpen ? -210 : 0 }}
+            animate={{ x: 0 }}
             transition={{ type: "linear" }}
             fill="currentColor"
             viewBox="0 0 20 20"
@@ -222,7 +275,10 @@ function Header() {
           >
             <path
               fillRule="evenodd"
-              d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+              d="M8 4a4 4 0 100 8 4 4 0 000-8z
+              M2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1
+              0 01-1.414 1.414l-4.816-4.816A6 6 0
+              012 8z"
               clipRule="evenodd"
             ></path>
           </motion.svg>
@@ -241,7 +297,7 @@ function Header() {
             ))}
           </Select>
         </Search>
-      </Col>
+      )}
     </Nav>
   );
 }

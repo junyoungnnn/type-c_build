@@ -11,14 +11,18 @@ import useWindowDimensions from "../Components/useWidowDimensions";
 const Wrapper = styled.div`
   background-color: ${(props) => props.theme.white.lighter};
   padding-bottom: 200px;
-  overflow-x: hidden; /* 가로 오버플로우 숨기기 추가 */
+  overflow-x: hidden;
 `;
 
 const Slider = styled.div`
   position: relative;
-  top: -300px;
-  width: 90%; /* 너비를 80%로 설정 */
-  margin: 0 auto; /* 가로 중앙 정렬 */
+  top: -350px;
+  width: 90%;
+  margin: 0 auto;
+
+  @media (max-width: 768px) {
+    top: -280px;
+  }
 `;
 
 const Row = styled(motion.div)`
@@ -27,6 +31,10 @@ const Row = styled(motion.div)`
   grid-template-columns: repeat(5, 1fr);
   position: absolute;
   width: 100%;
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
 `;
 
 const Box = styled(motion.div)`
@@ -44,6 +52,7 @@ const Box = styled(motion.div)`
   position: relative;
   border: 2px solid black;
   z-index: 0;
+  cursor: pointer;
 
   &:first-child {
     transform-origin: center left;
@@ -51,7 +60,16 @@ const Box = styled(motion.div)`
   &:last-child {
     transform-origin: center right;
   }
-  cursor: pointer;
+
+  @media (max-width: 768px) {
+    height: 150px;
+    font-size: 48px;
+  }
+
+  @media (max-width: 480px) {
+    height: 120px;
+    font-size: 36px;
+  }
 `;
 
 const Info = styled(motion.div)`
@@ -70,6 +88,18 @@ const Info = styled(motion.div)`
     font-size: 18px;
     margin: 0;
   }
+
+  @media (max-width: 768px) {
+    h4 {
+      font-size: 16px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    h4 {
+      font-size: 14px;
+    }
+  }
 `;
 
 const FishImage = styled.img`
@@ -80,6 +110,11 @@ const FishImage = styled.img`
   margin-bottom: 10px;
 
   @media (max-width: 768px) {
+    width: 70%;
+    height: 70%;
+  }
+
+  @media (max-width: 480px) {
     width: 80%;
     height: 80%;
   }
@@ -125,12 +160,12 @@ const FishGrid = styled.div`
   margin: 0 auto; /* 가로 중앙 정렬 */
 
   @media (max-width: 1024px) {
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     grid-template-rows: repeat(6, auto);
   }
 
   @media (max-width: 768px) {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     grid-template-rows: repeat(10, auto);
   }
 
@@ -178,7 +213,17 @@ const Title = styled.h1`
   color: ${(props) => props.theme.white.darker};
   text-align: center;
   margin-top: 20px;
-  margin-bottom: 40%;
+  margin-bottom: 50%;
+
+  @media (max-width: 768px) {
+    font-size: 36px;
+    margin-bottom: 70%;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 24px;
+    margin-bottom: 70%;
+  }
 `;
 
 const Loader = styled.span`
@@ -195,10 +240,11 @@ interface IData {
   fishId: number;
 }
 
-const offset = 5;
-
 function Fishs() {
   const width = useWindowDimensions();
+  const isMobile = width <= 768; // 모바일 여부 판단
+  const offset = isMobile ? 2 : 5; // 모바일에서는 2, 데스크톱에서는 5
+
   const { isLoading: fishListLoading, data: fishListData } =
     useQuery<IFishList>("allFishs", fetchFishList);
 
@@ -206,15 +252,19 @@ function Fishs() {
 
   const [index, setIndex] = useState(0);
   const [leaving, setLeaving] = useState(false);
+
   const incraseIndex = () => {
     if (fishListData) {
       if (leaving) return;
       toggleLeaving();
-      const totalFishs = fishListData?.data.length - 1;
+
+      const totalFishs = fishListData?.data.length;
       const maxIndex = Math.floor(totalFishs / offset);
-      setIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
+
+      setIndex((prev) => (prev === maxIndex - 1 ? 0 : prev + 1));
     }
   };
+
   const toggleLeaving = () => setLeaving((prev) => !prev);
 
   return (
@@ -223,7 +273,6 @@ function Fishs() {
         <title>수산물 가격 예측</title>
       </Helmet>
       <Wrapper>
-        {/* <Container> */}
         <Banner onClick={incraseIndex}>
           <Title>수산물 가격 예측</Title>
         </Banner>
@@ -256,8 +305,8 @@ function Fishs() {
                             state: { fishName: f.fishName },
                           })
                         }
-                        role="button" // 접근성을 위해 버튼 역할 지정
-                        tabIndex={0} // 키보드 접근 가능하도록 설정
+                        role="button"
+                        tabIndex={0}
                         onKeyPress={(e) => {
                           if (e.key === "Enter") {
                             history.push({
@@ -291,8 +340,8 @@ function Fishs() {
                       state: { fishName: f.fishName },
                     })
                   }
-                  role="button" // 접근성을 위해 버튼 역할 지정
-                  tabIndex={0} // 키보드 접근 가능하도록 설정
+                  role="button"
+                  tabIndex={0}
                   onKeyPress={(e) => {
                     if (e.key === "Enter") {
                       history.push({

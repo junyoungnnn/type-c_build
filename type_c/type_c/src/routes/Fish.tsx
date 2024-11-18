@@ -25,6 +25,11 @@ const TodayPricesContainer = styled.div`
   padding: 20px;
   background-color: ${(props) => props.theme.white.darker};
   border-radius: 10px;
+
+  /* 반응형 스타일 */
+  @media (max-width: 768px) {
+    padding: 15px;
+  }
 `;
 
 const PriceItem = styled.div`
@@ -34,10 +39,22 @@ const PriceItem = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+
+  /* 반응형 스타일 */
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 15px;
+  }
 `;
 
 const ModelName = styled.span`
   font-weight: bold;
+
+  /* 반응형 스타일 */
+  @media (max-width: 480px) {
+    margin-bottom: 5px;
+  }
 `;
 
 const PriceValue = styled.span`

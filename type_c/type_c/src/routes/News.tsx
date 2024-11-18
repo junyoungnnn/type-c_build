@@ -18,6 +18,16 @@ const Title = styled.h1`
   text-align: center;
   margin: 100px 0 50px 0;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+
+  @media (max-width: 768px) {
+    font-size: 28px;
+    margin: 80px 0 40px 0;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 24px;
+    margin: 60px 0 30px 0;
+  }
 `;
 
 const Loader = styled.span`
@@ -51,6 +61,11 @@ const NewsList = styled.table`
     border: 1px solid ${(props) => props.theme.borderColor};
     text-align: left;
     font-size: 16px;
+
+    @media (max-width: 480px) {
+      font-size: 14px;
+      padding: 8px 10px;
+    }
   }
 
   th {
@@ -112,6 +127,11 @@ const PageButton = styled.button<{ active?: boolean }>`
     color: ${(props) => props.theme.disabledTextColor};
     cursor: not-allowed;
   }
+
+  @media (max-width: 480px) {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
 `;
 
 interface INewsItem {
@@ -130,8 +150,8 @@ function News() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [pageGroup, setPageGroup] = useState(0);
+  const [pageCount, setPageCount] = useState(10); // 페이지 버튼 개수 상태 추가
 
-  const pageCount = 10;
   const startPage = pageGroup * pageCount + 1;
   const endPage = startPage + pageCount - 1;
 
@@ -180,13 +200,33 @@ function News() {
     setPage(startPage);
   }, [pageGroup]);
 
+  // 화면 크기에 따라 페이지 버튼 개수 조정
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 480) {
+        setPageCount(4);
+      } else {
+        setPageCount(10);
+      }
+    };
+
+    handleResize(); // 초기 실행
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // 페이지 그룹 변경 시 startPage와 endPage를 재계산
+  useEffect(() => {
+    setPageGroup(Math.floor((page - 1) / pageCount));
+  }, [pageCount, page]);
+
   if (error) {
     return (
       <Container>
         <Helmet>
           <title>News</title>
         </Helmet>
-        <Title>오늘의 날짜: {new Date().toISOString().split("T")[0]}</Title>
+        <Title>해양수산 뉴스</Title>
         <ErrorMessage>뉴스를 불러오는 중 오류가 발생했습니다.</ErrorMessage>
       </Container>
     );
@@ -195,11 +235,11 @@ function News() {
   return (
     <>
       <Helmet>
-        <title>수산물 뉴스</title>
+        <title>해양수산 뉴스</title>
       </Helmet>
 
       <Container>
-        <Title>오늘의 날짜: {new Date().toISOString().split("T")[0]}</Title>
+        <Title>해양수산 뉴스</Title>
         {isLoading ? (
           <Loader>로딩 중...</Loader>
         ) : (
@@ -254,7 +294,6 @@ function News() {
                     key={pageNumber}
                     onClick={() => handlePageClick(pageNumber)}
                     active={page === pageNumber}
-                    disabled={pageNumber > endPage}
                   >
                     {pageNumber}
                   </PageButton>
