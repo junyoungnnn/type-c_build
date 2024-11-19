@@ -25,16 +25,21 @@ const Slider = styled.div`
   }
 `;
 
+// 수정된 Row 컴포넌트
 const Row = styled(motion.div)`
+  bottom: -200px;
   display: grid;
   gap: 10px;
   grid-template-columns: repeat(5, 1fr);
-  position: absolute;
-  width: 100%;
+  grid-template-rows: 1fr;
 
   @media (max-width: 768px) {
     grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr); // 모바일에서 두 줄로 설정
   }
+
+  position: absolute;
+  width: 100%;
 `;
 
 const Box = styled(motion.div)`
@@ -242,8 +247,9 @@ interface IData {
 
 function Fishs() {
   const width = useWindowDimensions();
-  const isMobile = width <= 768; // 모바일 여부 판단
-  const offset = isMobile ? 2 : 5; // 모바일에서는 2, 데스크톱에서는 5
+  const isMobile = width <= 768;
+  const offset = isMobile ? 4 : 5;
+  const totalSlides = 10;
 
   const { isLoading: fishListLoading, data: fishListData } =
     useQuery<IFishList>("allFishs", fetchFishList);
@@ -254,18 +260,30 @@ function Fishs() {
   const [leaving, setLeaving] = useState(false);
 
   const incraseIndex = () => {
-    if (fishListData) {
-      if (leaving) return;
-      toggleLeaving();
+    if (!fishListData) return;
 
-      const totalFishs = fishListData?.data.length;
-      const maxIndex = Math.floor(totalFishs / offset);
+    if (leaving) return;
+    toggleLeaving();
 
-      setIndex((prev) => (prev === maxIndex - 1 ? 0 : prev + 1));
-    }
+    const totalFishs = fishListData.data.length;
+    const maxIndex = Math.ceil(totalFishs / offset);
+
+    setIndex((prev) => (prev + 1) % totalSlides);
   };
 
   const toggleLeaving = () => setLeaving((prev) => !prev);
+
+  // 수정된 getSlideData 함수
+  const getSlideData = (data: IData[], index: number, offset: number) => {
+    const totalData = data.length;
+    const result = [];
+    const start = index * offset;
+
+    for (let i = start; i < start + offset; i++) {
+      result.push(data[i % totalData]);
+    }
+    return result;
+  };
 
   return (
     <>
@@ -276,7 +294,7 @@ function Fishs() {
         <Banner onClick={incraseIndex}>
           <Title>수산물 가격 예측</Title>
         </Banner>
-        {fishListLoading ? (
+        {fishListLoading || !fishListData ? (
           <Loader>"Loading..."</Loader>
         ) : (
           <>
@@ -289,49 +307,47 @@ function Fishs() {
                   transition={{ type: "tween", duration: 1 }}
                   key={index}
                 >
-                  {fishListData?.data
-                    .slice(offset * index, offset * index + offset)
-                    .map((f) => (
-                      <Box
-                        layoutId={f.fishName + ""}
-                        key={f.fishName}
-                        variants={BoxVariants}
-                        whileHover="hover"
-                        initial="normal"
-                        transition={{ type: "tween" }}
-                        onClick={() =>
+                  {getSlideData(fishListData.data, index, offset).map((f) => (
+                    <Box
+                      layoutId={f.fishName + index}
+                      key={f.fishName + index}
+                      variants={BoxVariants}
+                      whileHover="hover"
+                      initial="normal"
+                      transition={{ type: "tween" }}
+                      onClick={() =>
+                        history.push({
+                          pathname: `/${f.fishName}`,
+                          state: { fishName: f.fishName },
+                        })
+                      }
+                      role="button"
+                      tabIndex={0}
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter") {
                           history.push({
                             pathname: `/${f.fishName}`,
                             state: { fishName: f.fishName },
-                          })
+                          });
                         }
-                        role="button"
-                        tabIndex={0}
-                        onKeyPress={(e) => {
-                          if (e.key === "Enter") {
-                            history.push({
-                              pathname: `/${f.fishName}`,
-                              state: { fishName: f.fishName },
-                            });
-                          }
-                        }}
-                      >
-                        <FishImage
-                          src={`${process.env.PUBLIC_URL}/${f.fishName}.png`}
-                          alt={`${f.fishName} 이미지`}
-                        />
-                        <Info variants={infoVariants}>
-                          <h4>{f.fishName}</h4>
-                        </Info>
-                      </Box>
-                    ))}
+                      }}
+                    >
+                      <FishImage
+                        src={`${process.env.PUBLIC_URL}/${f.fishName}.png`}
+                        alt={`${f.fishName} 이미지`}
+                      />
+                      <Info variants={infoVariants}>
+                        <h4>{f.fishName}</h4>
+                      </Info>
+                    </Box>
+                  ))}
                 </Row>
               </AnimatePresence>
             </Slider>
 
-            {/* New Grid Section */}
+            {/* FishGrid는 그대로 유지 */}
             <FishGrid>
-              {fishListData?.data.map((f) => (
+              {fishListData.data.map((f) => (
                 <GridItem
                   key={f.fishName}
                   onClick={() =>

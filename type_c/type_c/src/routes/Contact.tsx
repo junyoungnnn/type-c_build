@@ -78,6 +78,7 @@ const Address = styled.p`
 
 const MapContainer = styled.div`
   margin-top: 50px;
+  margin-bottom: 255px;
   text-align: center;
 
   @media (max-width: 480px) {
