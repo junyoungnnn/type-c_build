@@ -3,7 +3,7 @@ import moment from "moment";
 
 export const endDateAtom = atom({
   key: "endDate",
-  default: moment().format("YYYY-MM-DD"),
+  default: moment().add(1, "days").format("YYYY-MM-DD"),
 });
 
 export const oneWeekDateAtom = atom({
@@ -19,4 +19,14 @@ export const oneMonthLastAtom = atom({
 export const halfYearLastAtom = atom({
   key: "halfYearLast",
   default: moment().subtract(6, "month").format("YYYY-MM-DD"),
+});
+
+// export const nextDateAtom = atom({
+//   key: "nextDate",
+//   default: moment().add(1, "days").format("YYYY-MM-DD"),
+// });
+
+export const nextDateAtom = atom({
+  key: "nextDate",
+  default: moment().format("YYYY-MM-DD"),
 });

@@ -6,7 +6,7 @@ import { useQuery, useQueries } from "react-query";
 import { fetchFishRealPrice, fetchFishPredictPrice } from "./api";
 import { Helmet } from "react-helmet-async";
 import { useRecoilValue } from "recoil";
-import { endDateAtom } from "../atom";
+import { endDateAtom, nextDateAtom } from "../atom";
 import { subMonths, format, subDays } from "date-fns";
 import PriceChart from "./PriceChart";
 
@@ -121,6 +121,7 @@ function Fish() {
   const [fishCode, setFishCode] = useState(defaultFishCode);
   const [selectedPeriod, setSelectedPeriod] = useState("7Days");
   const endDate = useRecoilValue(endDateAtom);
+  const nextDate = useRecoilValue(nextDateAtom);
 
   // 시작 날짜 계산 (6개월 전)
   const startDate = useMemo(() => {
@@ -196,7 +197,7 @@ function Fish() {
     sortedPredictPriceData[model].map((d) => d.predictDate)
   );
   const combinedDates = Array.from(
-    new Set([...realDates, ...predictDates])
+    new Set([...realDates, ...predictDates, endDate])
   ).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
 
   // 가격 데이터 매핑
@@ -223,10 +224,18 @@ function Fish() {
   });
 
   // 가격 조정 함수
-  const adjustPrices = (prices: (number | null)[]): (number | null)[] => {
+  const adjustPrices = (
+    prices: (number | null)[],
+    dates: string[]
+  ): (number | null)[] => {
     let lastValidPrice: number | null = null;
-    return prices.map((price) => {
+    return prices.map((price, index) => {
+      const date = dates[index];
       if (price === null || price === 0) {
+        // endDate에서는 전날 값으로 대체하지 않음
+        if (date === endDate) {
+          return null;
+        }
         return lastValidPrice;
       }
       lastValidPrice = price;
@@ -234,12 +243,17 @@ function Fish() {
     });
   };
 
-  const adjustedRealPriceData = adjustPrices(realPriceDataAligned);
+  // 조정된 데이터 생성
+  const adjustedRealPriceData = adjustPrices(
+    realPriceDataAligned,
+    combinedDates
+  );
 
   const adjustedPredictPriceData: { [key: string]: (number | null)[] } = {};
   models.forEach((model) => {
     adjustedPredictPriceData[model] = adjustPrices(
-      predictPriceDataAligned[model]
+      predictPriceDataAligned[model],
+      combinedDates
     );
   });
 
@@ -386,25 +400,32 @@ function Fish() {
                 />
                 {/* 오늘의 모델별 가격 표시 */}
                 <TodayPricesContainer>
-                  <h2 style={{ textAlign: "center", marginBottom: "20px" }}>
-                    오늘의 가격 예측
-                  </h2>
-                  {models.map((model) => (
-                    <PriceItem key={model}>
-                      <ModelName>
-                        {model.charAt(0).toUpperCase() + model.slice(1)} 모델
-                      </ModelName>
-                      <PriceValue>
-                        {todayPrices[model]
-                          ? `${todayPrices[
-                              model
-                            ]?.price.toLocaleString()} 원 (${
-                              todayPrices[model]?.date
-                            })`
-                          : "데이터 없음"}
-                      </PriceValue>
-                    </PriceItem>
-                  ))}
+                  <div>
+                    <h3 style={{ textAlign: "center", marginBottom: "10px" }}>
+                      내일의 가격 ({endDate})
+                    </h3>
+                    {models.map((model) => {
+                      // 내일의 가격 추출
+                      const modelData = sortedPredictPriceData[model];
+                      const nextDatePrice = modelData.find(
+                        (d) => d.predictDate === nextDate
+                      );
+
+                      return (
+                        <PriceItem key={`${model}-next`}>
+                          <ModelName>
+                            {model.charAt(0).toUpperCase() + model.slice(1)}{" "}
+                            모델
+                          </ModelName>
+                          <PriceValue>
+                            {nextDatePrice
+                              ? `${nextDatePrice.predictPrice.toLocaleString()} 원 (${nextDate})`
+                              : "데이터 없음"}
+                          </PriceValue>
+                        </PriceItem>
+                      );
+                    })}
+                  </div>
                 </TodayPricesContainer>
               </>
             )}

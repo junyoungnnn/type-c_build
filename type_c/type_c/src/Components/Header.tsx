@@ -162,7 +162,20 @@ const navVariants = {
 
 const sites = [
   { name: "경제/인문사회연구회", url: "https://www.nrc.re.kr/index.es?sid=a1" },
-  // 다른 사이트들...
+  { name: "해양수산부", url: "https://www.mof.go.kr/index.do" },
+  { name: "정부24", url: "https://www.gov.kr/portal/main/nologin" },
+  { name: "국립수산과학원", url: "https://www.nifs.go.kr/main.do" },
+  {
+    name: "농림축산식품부",
+    url: "https://www.mafra.go.kr/sites/home/index.do",
+  },
+  { name: "국립해양조사원", url: "https://www.khoa.go.kr/" },
+  {
+    name: "해양수산통계시스템",
+    url: "https://www.mof.go.kr/statPortal/main/portalMain.do",
+  },
+  { name: "한국농림수산정보센터", url: "https://www.epis.or.kr/main/view" },
+  { name: "한국은행경제통계시스템", url: "https://ecos.bok.or.kr/#/" },
 ];
 
 function Header() {
