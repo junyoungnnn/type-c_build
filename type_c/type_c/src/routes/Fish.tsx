@@ -402,7 +402,7 @@ function Fish() {
                 <TodayPricesContainer>
                   <div>
                     <h3 style={{ textAlign: "center", marginBottom: "10px" }}>
-                      내일의 가격 ({endDate})
+                      내일의 가격
                     </h3>
                     {models.map((model) => {
                       // 내일의 가격 추출
@@ -419,7 +419,7 @@ function Fish() {
                           </ModelName>
                           <PriceValue>
                             {nextDatePrice
-                              ? `${nextDatePrice.predictPrice.toLocaleString()} 원 (${nextDate})`
+                              ? `${nextDatePrice.predictPrice.toLocaleString()} 원 (${endDate})`
                               : "데이터 없음"}
                           </PriceValue>
                         </PriceItem>

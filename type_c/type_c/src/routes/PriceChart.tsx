@@ -65,6 +65,7 @@ const PriceChart: React.FC<PriceChartProps> = ({
         style: { fontSize: "12px" },
       },
     },
+    colors: ["#0be881", "#ff9f43", "#1e90ff", "#e74c3c"],
     tooltip: {
       shared: true,
       intersect: false,
