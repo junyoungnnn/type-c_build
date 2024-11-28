@@ -408,7 +408,7 @@ function Fish() {
                       // 내일의 가격 추출
                       const modelData = sortedPredictPriceData[model];
                       const nextDatePrice = modelData.find(
-                        (d) => d.predictDate === nextDate
+                        (d) => d.predictDate === endDate
                       );
 
                       return (
