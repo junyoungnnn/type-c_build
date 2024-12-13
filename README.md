@@ -1,6 +1,7 @@
 # 수산물 도매가 예측 서비스
 
 <div>
+  qwe
   <a href="https://junyoungnnn.github.io/type-c_build" target="_blank">
 </div>
     
